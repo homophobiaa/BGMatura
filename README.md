@@ -8,7 +8,7 @@ BG Matura brings study material, interactive practice, timed exam simulations, a
 
 ## Project status
 
-The application foundation now runs: a Bulgarian introductory page, strict TypeScript/lint checks, server environment validation, a unit-test runner, and typed question/evaluation contracts. The capabilities below describe the planned MVP, not a list of completed features. Lessons, practice, exams, authentication, and database access are not implemented yet.
+The application foundation now runs: a Bulgarian introductory page, strict TypeScript/lint checks, server environment validation, and typed question/evaluation contracts. The server has Prisma/PostgreSQL persistence for authors and topic hierarchies, with unit, database integration, and desktop/mobile browser smoke tests. The capabilities below describe the planned MVP, not completed features. Public learning pages, editorial forms, practice, exams, and authentication are not implemented yet.
 
 The planning target is a usable release ahead of the May 2027 exam period.
 
@@ -97,14 +97,17 @@ npm start
 
 ### Environment variables
 
-The static introductory page and unit tests require no credentials. For work
-that needs server configuration, copy `.env.example` to `.env.local` and replace
-the sample values. Next.js loads `.env.local`; it must never be committed.
+The static introductory page and unit tests require no credentials. The local
+database helper creates `.env.local` only if it is absent. For another database,
+copy `.env.example` to `.env.local` and replace the sample values. Next.js and
+Prisma load the appropriate environment files; they must never be committed.
 
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | Server-only PostgreSQL connection URL, with a host and database name. Required when `getServerEnvironment()` is called by a server feature. |
 | `NODE_ENV` | Validated as `development`, `test`, or `production`; Next.js sets it for its commands. An omitted value defaults to `development`. |
+| `TEST_DATABASE_URL` | Optional isolated test override. Only the documented local test role/database/port is accepted; ordinary `DATABASE_URL` is never a test fallback. |
+| `PG_BIN_DIR` | Optional absolute directory containing a complete PostgreSQL 18 `bin` toolset. Otherwise use the project-local portable cache or PATH. |
 
 No `NEXT_PUBLIC_*` variables are needed. Do not put database URLs, tokens, admin
 credentials, or answer keys in public environment variables. Validation errors
@@ -120,6 +123,8 @@ list variable names rather than values. See [foundation boundaries](documentatio
 | `npm run test:watch` | Re-run affected unit tests while developing. |
 | `npm run build` | Compile the production application and check its server/client import boundaries. |
 | `npm run check` | Run lint, type checking, unit tests, and the production build in sequence. |
+| `npm run test:integration` | Apply committed migrations to the guarded local test database and run persistence/constraint/rollback tests. |
+| `npm run test:e2e` | Run Chromium desktop/mobile smoke tests against a dedicated server using only the guarded test database. |
 
 Unit tests live next to their owning feature/module as `*.test.ts`. Vitest uses
 the same `@/*` source alias as the application. Environment tests cover invalid
@@ -132,13 +137,42 @@ development server starts. Keep that file alongside the project instructions
 in `CLAUDE.md` and `.claude/`; the product and engineering requirements still
 apply to all application work.
 
-### Database and admin setup still to come
+### Local database and migration setup
 
-PostgreSQL provisioning, Prisma migrations/seeds, admin provisioning, browser
-tests, CI, and hosting are tracked separately. There are no migration, seed,
-admin, or deployment commands to run yet. Do not connect unit tests to a real
-production database. Use the actual `package.json`, future Prisma configuration,
-and `.env.example` as the setup source of truth.
+Install the complete PostgreSQL 18 server binaries with `initdb` and `pg_ctl`
+on PATH, or set `PG_BIN_DIR`. A client-tools-only installation is insufficient.
+The helper uses dedicated loopback ports and does not change installed services.
+
+```sh
+npm run db:start
+npm run db:deploy
+npm run db:status
+```
+
+| Command | Behavior |
+| --- | --- |
+| `npm run db:generate` | Generate the ignored Prisma client; also runs on `npm ci` via postinstall. |
+| `npm run db:migrate -- --name change_name` | Create/apply a development migration for an intentional schema change. |
+| `npm run db:deploy` | Apply existing committed migrations to the explicitly configured database. |
+| `npm run db:status` | Inspect migration status. |
+| `npm run db:stop` | Stop only the project-local development cluster; retain its data. |
+| `npm run db:reset` | Destructively reset only the generated project-local development database; never a shell/hosted URL. |
+| `npm run db:test:start` / `npm run db:test:stop` | Start/stop the separate local test cluster. |
+
+To verify persistence and the browser foundation:
+
+```sh
+npm run db:test:start
+npm run test:integration
+npx playwright install chromium
+npm run test:e2e
+```
+
+Read [DATABASE.md](documentation/DATABASE.md) for complete setup, ports,
+credential handling, safe reset boundaries, author/topic constraints, fixture
+cleanup, and command ownership. Database state, generated clients, and browser
+reports are ignored by Git. Seeds, admin provisioning, CI, and hosted deployment
+remain separate work; there are no admin or educational seed commands yet.
 
 ## Working on the project
 
