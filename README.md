@@ -58,14 +58,32 @@ This is the intended organization. Directories and documents should be added whe
 
 ## Development setup
 
-Exact setup commands are not yet documented because the repository configuration has not been verified. Once the application is initialized, this section must include:
+### Runtime and package manager
 
-1. Required Node.js version and package manager.
-2. Dependency installation command.
-3. PostgreSQL setup and an `.env.example` containing required variable names without secret values.
-4. Database migration, seed, and initial admin setup instructions.
-5. Development server command and local URL.
-6. Available lint, type-check, test, and production build commands.
+| Tool | Version | Why |
+| --- | --- | --- |
+| Node.js | **24.x (LTS)** | Active LTS line supported until April 2028, which covers the May 2027 release target and the following year. Node.js 22 leaves support in April 2027, right before launch. |
+| npm | Bundled with Node.js 24 | Ships with Node.js, so contributors install nothing extra. It is the default in the Next.js documentation and is supported by every mainstream host. |
+
+The required Node.js major version is pinned in [`.nvmrc`](.nvmrc). With [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm), run `nvm use` or `fnm use` in the repository root.
+
+Lockfile and version-pinning conventions:
+
+- **Use npm only.** Do not commit `yarn.lock`, `pnpm-lock.yaml`, or `bun.lockb`.
+- **Commit `package-lock.json`.** Every dependency change updates it in the same commit.
+- **Install from the lockfile.** Use `npm ci` for a clean install and in CI; use `npm install <package>` only when intentionally adding or changing a dependency.
+- **Pin the runtime, range the libraries.** `.nvmrc` and the `engines` field in `package.json` (added when the app is initialized) pin the Node.js major version. Dependencies use npm's default caret ranges; the lockfile fixes the exact installed versions.
+- **Upgrade deliberately.** Bump Node.js or major dependency versions in a dedicated change that updates this section and passes the project's checks.
+
+### Remaining setup
+
+The application is not initialized yet. Once it is, this section must also include:
+
+1. Dependency installation command.
+2. PostgreSQL setup and an `.env.example` containing required variable names without secret values.
+3. Database migration, seed, and initial admin setup instructions.
+4. Development server command and local URL.
+5. Available lint, type-check, test, and production build commands.
 
 Use the repository's actual `package.json`, Prisma configuration, and environment example as the source of truth. Never commit credentials or production secrets.
 
