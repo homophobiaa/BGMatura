@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  --canvas: #faf9f5;
+  --ink: #141413;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}

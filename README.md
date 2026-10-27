@@ -8,7 +8,7 @@ BG Matura brings study material, interactive practice, timed exam simulations, a
 
 ## Project status
 
-The product scope and engineering direction are defined. The capabilities below describe the planned MVP, not a list of completed features.
+The application foundation now runs: a Bulgarian introductory page, strict TypeScript/lint checks, server environment validation, a unit-test runner, and typed question/evaluation contracts. The capabilities below describe the planned MVP, not a list of completed features. Lessons, practice, exams, authentication, and database access are not implemented yet.
 
 The planning target is a usable release ahead of the May 2027 exam period.
 
@@ -75,17 +75,70 @@ Lockfile and version-pinning conventions:
 - **Pin the runtime, range the libraries.** `.nvmrc` and the `engines` field in `package.json` (added when the app is initialized) pin the Node.js major version. Dependencies use npm's default caret ranges; the lockfile fixes the exact installed versions.
 - **Upgrade deliberately.** Bump Node.js or major dependency versions in a dedicated change that updates this section and passes the project's checks.
 
-### Remaining setup
+### Install and run
 
-The application is not initialized yet. Once it is, this section must also include:
+From the repository root, using Node.js 24 and npm 11:
 
-1. Dependency installation command.
-2. PostgreSQL setup and an `.env.example` containing required variable names without secret values.
-3. Database migration, seed, and initial admin setup instructions.
-4. Development server command and local URL.
-5. Available lint, type-check, test, and production build commands.
+```sh
+npm ci
+npm run dev
+```
 
-Use the repository's actual `package.json`, Prisma configuration, and environment example as the source of truth. Never commit credentials or production secrets.
+Open [http://localhost:3000](http://localhost:3000). The current page is an honest
+introduction to a platform in development; it does not expose unpublished study
+content or link to features that have not been built.
+
+For a production build and local production server:
+
+```sh
+npm run build
+npm start
+```
+
+### Environment variables
+
+The static introductory page and unit tests require no credentials. For work
+that needs server configuration, copy `.env.example` to `.env.local` and replace
+the sample values. Next.js loads `.env.local`; it must never be committed.
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Server-only PostgreSQL connection URL, with a host and database name. Required when `getServerEnvironment()` is called by a server feature. |
+| `NODE_ENV` | Validated as `development`, `test`, or `production`; Next.js sets it for its commands. An omitted value defaults to `development`. |
+
+No `NEXT_PUBLIC_*` variables are needed. Do not put database URLs, tokens, admin
+credentials, or answer keys in public environment variables. Validation errors
+list variable names rather than values. See [foundation boundaries](documentation/FOUNDATION.md).
+
+### Checks and unit tests
+
+| Command | Behavior |
+| --- | --- |
+| `npm run lint` | Next.js/TypeScript ESLint rules, including type-aware unsafe-code checks; warnings fail. |
+| `npm run typecheck` | Generate Next.js route types and run strict TypeScript without emitting JavaScript. |
+| `npm test` | Run Vitest's Node.js unit tests once. No database or production environment files are loaded. |
+| `npm run test:watch` | Re-run affected unit tests while developing. |
+| `npm run build` | Compile the production application and check its server/client import boundaries. |
+| `npm run check` | Run lint, type checking, unit tests, and the production build in sequence. |
+
+Unit tests live next to their owning feature/module as `*.test.ts`. Vitest uses
+the same `@/*` source alias as the application. Environment tests cover invalid
+configuration and safe errors; assessment tests cover score bounds and the
+distinction between scored, ungraded, and self-review results. Type assertions
+in those tests are also checked by `npm run typecheck`.
+
+Next.js maintains the generated framework guidance in `AGENTS.md` when the
+development server starts. Keep that file alongside the project instructions
+in `CLAUDE.md` and `.claude/`; the product and engineering requirements still
+apply to all application work.
+
+### Database and admin setup still to come
+
+PostgreSQL provisioning, Prisma migrations/seeds, admin provisioning, browser
+tests, CI, and hosting are tracked separately. There are no migration, seed,
+admin, or deployment commands to run yet. Do not connect unit tests to a real
+production database. Use the actual `package.json`, future Prisma configuration,
+and `.env.example` as the setup source of truth.
 
 ## Working on the project
 
