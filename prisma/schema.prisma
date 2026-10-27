@@ -41,6 +41,7 @@ model Topic {
   children  Topic[]           @relation("TopicHierarchy")
   position  Int               @default(0)
   status    PublicationStatus @default(DRAFT)
+  questions QuestionTopic[]
   createdAt DateTime          @default(now()) @db.Timestamptz(3)
   updatedAt DateTime          @updatedAt @db.Timestamptz(3)
 
@@ -65,13 +66,13 @@ enum AssessmentMode {
 /// One shared bank for practice and exams; exams link to questions, never copy them.
 /// The CHECK constraints in the migration decide which fields each type/mode needs.
 model Question {
-  id                String            @id @default(uuid()) @db.Uuid
+  id                String              @id @default(uuid()) @db.Uuid
   subject           Subject
   type              QuestionType
   prompt            String
   assessmentMode    AssessmentMode
   /// Objective questions only. Decimal so half points stay exact.
-  maximumPoints     Decimal?          @db.Decimal(6, 2)
+  maximumPoints     Decimal?            @db.Decimal(6, 2)
   /// Objective questions only: shown after the answer is graded.
   explanation       String?
   /// Written (self-review/ungraded) questions only.
@@ -79,16 +80,20 @@ model Question {
   /// Written questions only: JSON array of rubric criteria, validated by the application.
   rubric            Json?
   /// Objective short-response questions only.
-  acceptedAnswers   String[]          @default([])
+  acceptedAnswers   String[]            @default([])
   /// Multiple-choice questions only; a trigger requires it to be one of this question's own options.
-  correctOptionId   String?           @db.Uuid
-  correctOption     QuestionOption?   @relation("CorrectOption", fields: [correctOptionId], references: [id], onDelete: NoAction, onUpdate: Restrict)
-  options           QuestionOption[]  @relation("QuestionOptions")
-  status            PublicationStatus @default(DRAFT)
-  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime          @updatedAt @db.Timestamptz(3)
+  correctOptionId   String?             @db.Uuid
+  correctOption     QuestionOption?     @relation("CorrectOption", fields: [correctOptionId], references: [id], onDelete: NoAction, onUpdate: Restrict)
+  options           QuestionOption[]    @relation("QuestionOptions")
+  topics            QuestionTopic[]
+  works             QuestionWork[]
+  provenance        QuestionProvenance?
+  status            PublicationStatus   @default(DRAFT)
+  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
 
   @@unique([id, type])
+  @@unique([id, subject])
   @@index([subject, status, createdAt, id])
 }
 
@@ -121,9 +126,68 @@ model Work {
   importantIdeas String[]          @default([])
   interpretation String?
   status         PublicationStatus @default(DRAFT)
+  questions      QuestionWork[]
   createdAt      DateTime          @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime          @updatedAt @db.Timestamptz(3)
 
   @@index([authorId, title, id])
   @@index([status, title, id])
+}
+
+enum QuestionOrigin {
+  ORIGINAL
+  ADAPTED
+  OFFICIAL
+}
+
+enum ReviewStatus {
+  UNREVIEWED
+  REVIEWED
+}
+
+/// Links a question to a topic of the same subject. Deleting a linked topic is refused; unlink first.
+model QuestionTopic {
+  questionId String   @db.Uuid
+  topicId    String   @db.Uuid
+  /// Copied from both sides by the composite foreign keys, so the question and topic must share it.
+  subject    Subject
+  question   Question @relation(fields: [questionId, subject], references: [id, subject], onDelete: Cascade, onUpdate: Restrict)
+  topic      Topic    @relation(fields: [topicId, subject], references: [id, subject], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([questionId, topicId])
+  @@index([topicId, questionId])
+}
+
+/// Optionally links a literature question to a relevant work. Works only exist for literature.
+model QuestionWork {
+  questionId String   @db.Uuid
+  workId     String   @db.Uuid
+  /// Always LITERATURE; the composite foreign key rejects a question of another subject.
+  subject    Subject  @default(LITERATURE)
+  question   Question @relation(fields: [questionId, subject], references: [id, subject], onDelete: Cascade, onUpdate: Restrict)
+  work       Work     @relation(fields: [workId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([questionId, workId])
+  @@index([workId, questionId])
+}
+
+/// Editorial provenance of a question. `origin` and `attribution` may be shown to students;
+/// everything else here is private to editors and must never reach a public projection.
+/// A question without a row is simply unclassified.
+model QuestionProvenance {
+  questionId      String         @id @db.Uuid
+  question        Question       @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  origin          QuestionOrigin
+  /// Public credit line, required before an adapted or official question can be marked reviewed.
+  attribution     String?
+  /// Private: exact citation such as document, page, or address.
+  sourceReference String?
+  /// Private: who wrote or adapted the question.
+  editorName      String?
+  reviewStatus    ReviewStatus   @default(UNREVIEWED)
+  reviewedBy      String?
+  reviewedAt      DateTime?      @db.Timestamptz(3)
+  reviewNotes     String?
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @db.Timestamptz(3)
 }
