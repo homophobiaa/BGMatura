@@ -1,6 +1,6 @@
 # Database foundation
 
-This batch implements issues #9, #10, #12, #27, #29, and #62. The database is
+This batch implements issues #9, #10, #12, #27, #28, #29, and #62. The database is
 PostgreSQL 18, accessed only from server code through Prisma ORM 7.10 and its
 `pg` driver adapter. Prisma 8 prereleases are deliberately excluded. The
 application still has no admin content mutations or public learning routes.
@@ -92,6 +92,34 @@ enforces publication in the query and selects only public reading fields.
 An unpublished slug resolves to `null`. Editorial writes, previews, and pages
 remain separate issues. Test authors are synthetic fixtures, not real learning
 material, and are rolled back rather than seeded into development.
+
+## Literary works
+
+`Work` is a literary work by **exactly one** author (`authorId`, required); an
+author can have many works. Co-authors and translators are outside the MVP. A work
+has a title, a globally unique nonblank slug for its public address, optional
+`genre`, `summary`, and `interpretation` text, three ordered study lists
+(`themes`, `characters`, `importantIdeas`), a `DRAFT`/`PUBLISHED` status, and
+timestamps.
+
+- **Study lists** are text arrays. They may be empty but never contain blank items
+  (blank includes tabs and line breaks); an empty list means "none recorded".
+- **Characters are optional.** A work where characters do not apply, such as a lyric
+  poem, keeps an empty `characters` list and remains valid even when published.
+- **Drafts may be incomplete.** PostgreSQL rejects publishing a work with a blank or
+  missing genre or summary. Fuller editorial completeness remains a publishing
+  feature (#40).
+- **Author link.** The foreign key restricts deleting an author who still has works
+  and changing referenced keys. Remove or reassign the works first.
+- Uniqueness, nonblank title/slug, required lists, and the publication rule are
+  database constraints, so they hold for writes made outside Prisma.
+
+[`findPublishedWorkBySlug`](../src/features/literature/server/works.ts) enforces
+publication in the query and selects only public reading fields: no status, author
+id, or timestamps. The author appears (name and slug) **only when the author is
+published too**; a draft author is never revealed through a published work, and
+the work's `author` is `null` instead. Admin writes, previews, and pages remain
+separate issues. Test works are synthetic fixtures, rolled back rather than seeded.
 
 ## Topics and subtopics
 

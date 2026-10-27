@@ -24,6 +24,7 @@ model Author {
   slug      String            @unique
   context   String?
   status    PublicationStatus @default(DRAFT)
+  works     Work[]
   createdAt DateTime          @default(now()) @db.Timestamptz(3)
   updatedAt DateTime          @updatedAt @db.Timestamptz(3)
 
@@ -100,5 +101,29 @@ model QuestionOption {
   correctForQuestions Question[]   @relation("CorrectOption")
   text                String
   position            Int
+
   @@unique([questionId, position])
+}
+
+/// A literary work by exactly one author. Study fields may be incomplete while a draft.
+model Work {
+  id             String            @id @default(uuid()) @db.Uuid
+  title          String
+  slug           String            @unique
+  authorId       String            @db.Uuid
+  author         Author            @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  genre          String?
+  summary        String?
+  /// Ordered study lists. Items are never blank; an empty list means "none recorded".
+  themes         String[]          @default([])
+  /// Empty for works where characters do not apply (for example a lyric poem), which is valid.
+  characters     String[]          @default([])
+  importantIdeas String[]          @default([])
+  interpretation String?
+  status         PublicationStatus @default(DRAFT)
+  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @db.Timestamptz(3)
+
+  @@index([authorId, title, id])
+  @@index([status, title, id])
 }
