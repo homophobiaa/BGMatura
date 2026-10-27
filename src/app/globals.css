@@ -21,6 +21,8 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-literata), Georgia, "Times New Roman", serif;
   --color-canvas: var(--canvas);
   --color-surface-soft: var(--surface-soft);
   --color-surface-card: var(--surface-card);
@@ -47,13 +49,70 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-pill: 9999px;
+
+  --text-display-xl: 2rem;
+  --text-display-xl--line-height: 1.1;
+  --text-display-xl--font-weight: 400;
+  --text-display-xl--letter-spacing: -0.01em;
+  --text-display-lg: 1.75rem;
+  --text-display-lg--line-height: 1.15;
+  --text-display-lg--font-weight: 400;
+  --text-display-lg--letter-spacing: -0.01em;
+  --text-display-md: 1.5rem;
+  --text-display-md--line-height: 1.2;
+  --text-display-md--font-weight: 400;
+  --text-display-md--letter-spacing: -0.01em;
+  --text-title: 1.125rem;
+  --text-title--line-height: 1.35;
+  --text-title--font-weight: 600;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.65;
+  --text-body: 1rem;
+  --text-body--line-height: 1.55;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.4;
+  --text-label--font-weight: 500;
+  --text-caption: 0.875rem;
+  --text-caption--line-height: 1.4;
+  --container-reading: 70ch;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --text-display-xl: 3rem;
+    --text-display-lg: 2.25rem;
+    --text-display-md: 1.75rem;
+    --text-title: 1.25rem;
+  }
 }
 
 body {
   margin: 0;
   background: var(--canvas);
   color: var(--body);
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+}
+
+@layer base {
+  h1, h2, h3 {
+    color: var(--ink);
+    font-family: var(--font-literata), Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+  }
+
+  h1 {
+    font-size: var(--text-display-lg);
+    line-height: var(--text-display-lg--line-height);
+  }
+
+  h2, h3 {
+    font-size: var(--text-display-md);
+    line-height: var(--text-display-md--line-height);
+  }
 }
 
 :focus-visible {
