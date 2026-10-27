@@ -1,6 +1,6 @@
 # Database foundation
 
-This batch implements issues #9, #10, #12, #27, and #29. The database is
+This batch implements issues #9, #10, #12, #27, #29, and #62. The database is
 PostgreSQL 18, accessed only from server code through Prisma ORM 7.10 and its
 `pg` driver adapter. Prisma 8 prereleases are deliberately excluded. The
 application still has no admin content mutations or public learning routes.
@@ -110,8 +110,63 @@ Slugs are unique **within a subject**. Titles may repeat.
   query, includes drafts, and must not be exposed as a public catalog without
   publication/ancestor visibility rules. No such route exists in this batch.
 
-These models do not yet attach works, lessons, questions, or attempts. Add those
+These models do not yet attach works, lessons, or attempts. Add those
 relationships deliberately in later migrations, including deletion constraints.
+
+## Question bank
+
+`Question` and `QuestionOption` are the one shared bank for practice and exams.
+Exams will **link** to questions; a question is never copied per exam. Questions
+carry the fields of the server-side `QuestionDefinition` contract
+([contracts.ts](../src/features/questions/server/contracts.ts)).
+
+| Column | Used by | Notes |
+| --- | --- | --- |
+| `subject`, `type`, `prompt` | all | `type`: multiple choice, short response, extended response, argumentative writing |
+| `assessmentMode` | all | `OBJECTIVE`, `SELF_REVIEW`, or `UNGRADED` |
+| `maximumPoints`, `explanation` | objective only | `Decimal(6,2)`, so half points stay exact; zero is allowed |
+| `acceptedAnswers` | objective short response only | raw editor answers; normalization happens when grading |
+| `correctOptionId` | multiple choice only | one of the question's own options |
+| `referenceGuidance`, `rubric` | written (self-review/ungraded) only | `rubric` is a JSON array of criteria, parsed with Zod when a definition is built |
+| `status` | all | `DRAFT` or `PUBLISHED`, plus `createdAt`/`updatedAt` |
+
+Options (`QuestionOption`) hold `text` and a `position`, unique per question.
+
+PostgreSQL enforces the structure, so it also holds for writes outside Prisma:
+
+- **Type and mode.** Multiple choice is always objective; extended responses and
+  essays are never objective. A short response can be either.
+- **Objective questions** require points and an explanation and forbid guidance
+  and a rubric. **Written questions** require guidance and forbid points and an
+  explanation, so written work can never carry a score.
+- Accepted answers belong to objective short responses only; a correct option to
+  multiple choice only; the rubric must be a JSON array; the prompt, option text,
+  and published fields must be nonblank; points and positions are nonnegative.
+- **Publication.** A draft may be incomplete. A published question needs an
+  explanation (objective) or guidance (written), a correct option (multiple
+  choice), and at least one accepted answer (objective short response). Further
+  completeness rules, such as the number of options, belong to the publishing
+  feature (#73).
+- **Options only on multiple choice.** `QuestionOption` has a composite foreign
+  key `(questionId, questionType)` to `Question(id, type)` plus a CHECK that the
+  type is multiple choice. Changing the type of a question that has options is
+  rejected.
+- **Correct option.** `correctOptionId` is a plain foreign key, and a trigger
+  requires the option to belong to the **same** question (Prisma cannot null
+  part of a composite key that includes the primary key). Another trigger stops
+  moving the correct option to a different question. The foreign key is
+  `NO ACTION`, so deleting the correct option alone is rejected while deleting
+  the whole question removes its options.
+
+[`toQuestionDefinition`](../src/features/questions/server/question-definitions.ts)
+turns a stored question with its options into the `QuestionDefinition` used by the
+graders. It refuses records that cannot be graded yet, such as a draft multiple-choice
+question without a correct option. The result contains answer keys and stays on the
+server; public projections are a separate task (#77). Topic, work, and source links
+(#63) and attempt snapshots (#68) are not part of this model yet.
+
+Integration tests cover multiple-choice and ungraded written records end to end
+(store, map, grade) and assert the exact constraint behind each rejection.
 
 ## Isolated persistence and browser tests
 
