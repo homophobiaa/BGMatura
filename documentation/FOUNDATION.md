@@ -12,8 +12,9 @@ author/topic persistence, and isolated integration/browser test infrastructure.
   Routes live in `src/app/`; pages are Server Components unless interactivity
   requires otherwise. TypeScript uses strict checking and the `@/*` source alias.
 - Tailwind CSS 4 supplies the agreed styling foundation. The initial page uses
-  the documented cream canvas and system serif/sans fallbacks. Final branding,
-  typography, navigation, and shared controls remain in their own issues.
+  the approved shared colour, spacing, radius, and focus tokens documented in
+  [UI-FOUNDATION.md](UI-FOUNDATION.md). Typography, navigation, and shared controls
+  remain in their own issues.
 - ESLint 10 uses the first-party Next.js Core Web Vitals plugin, React Hooks
   rules, and type-aware typescript-eslint rules. This avoids the ESLint 9-only
   peer dependencies in the aggregate `eslint-config-next` package. Unsafe typing

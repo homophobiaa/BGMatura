@@ -2,12 +2,61 @@
 
 :root {
   --canvas: #faf9f5;
+  --surface-soft: #f5f0e8;
+  --surface-card: #efe9de;
+  --surface-strong: #e8e0d2;
+  --hairline: #e6dfd8;
+  --border-control: #8f897f;
   --ink: #141413;
+  --body: #3d3d3a;
+  --muted: #5f5d57;
+  --on-primary: #ffffff;
+  --primary: #9c4f36;
+  --primary-active: #7f3f2a;
+  --coral-decorative: #cc785c;
+  --success: #2b6e3e;
+  --error: #a83434;
+  --warning: #7a5600;
+  --pending: var(--muted);
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-card: var(--surface-card);
+  --color-surface-strong: var(--surface-strong);
+  --color-hairline: var(--hairline);
+  --color-border-control: var(--border-control);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-on-primary: var(--on-primary);
+  --color-primary: var(--primary);
+  --color-primary-active: var(--primary-active);
+  --color-coral-decorative: var(--coral-decorative);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --color-pending: var(--pending);
+}
+
+@theme {
+  /* Four-pixel rhythm: p-1/2/3/4/6/8/12/16 = 4/8/12/16/24/32/48/64px. */
+  --spacing: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-pill: 9999px;
 }
 
 body {
   margin: 0;
   background: var(--canvas);
-  color: var(--ink);
+  color: var(--body);
   font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
