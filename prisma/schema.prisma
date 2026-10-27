@@ -47,3 +47,58 @@ model Topic {
   @@unique([subject, slug])
   @@index([subject, parentId, position, title, id])
 }
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_RESPONSE
+  EXTENDED_RESPONSE
+  ARGUMENTATIVE_WRITING
+}
+
+enum AssessmentMode {
+  OBJECTIVE
+  SELF_REVIEW
+  UNGRADED
+}
+
+/// One shared bank for practice and exams; exams link to questions, never copy them.
+/// The CHECK constraints in the migration decide which fields each type/mode needs.
+model Question {
+  id                String            @id @default(uuid()) @db.Uuid
+  subject           Subject
+  type              QuestionType
+  prompt            String
+  assessmentMode    AssessmentMode
+  /// Objective questions only. Decimal so half points stay exact.
+  maximumPoints     Decimal?          @db.Decimal(6, 2)
+  /// Objective questions only: shown after the answer is graded.
+  explanation       String?
+  /// Written (self-review/ungraded) questions only.
+  referenceGuidance String?
+  /// Written questions only: JSON array of rubric criteria, validated by the application.
+  rubric            Json?
+  /// Objective short-response questions only.
+  acceptedAnswers   String[]          @default([])
+  /// Multiple-choice questions only; a trigger requires it to be one of this question's own options.
+  correctOptionId   String?           @db.Uuid
+  correctOption     QuestionOption?   @relation("CorrectOption", fields: [correctOptionId], references: [id], onDelete: NoAction, onUpdate: Restrict)
+  options           QuestionOption[]  @relation("QuestionOptions")
+  status            PublicationStatus @default(DRAFT)
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @db.Timestamptz(3)
+
+  @@unique([id, type])
+  @@index([subject, status, createdAt, id])
+}
+
+model QuestionOption {
+  id                  String       @id @default(uuid()) @db.Uuid
+  questionId          String       @db.Uuid
+  /// Always MULTIPLE_CHOICE; the composite foreign key makes the database reject options on other types.
+  questionType        QuestionType
+  question            Question     @relation("QuestionOptions", fields: [questionId, questionType], references: [id, type], onDelete: Cascade, onUpdate: Restrict)
+  correctForQuestions Question[]   @relation("CorrectOption")
+  text                String
+  position            Int
+  @@unique([questionId, position])
+}
