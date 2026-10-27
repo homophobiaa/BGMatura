@@ -1,6 +1,6 @@
 # Database foundation
 
-This batch implements issues #9, #10, #12, #27, #28, #29, and #62. The database is
+This batch implements issues #9, #10, #12, #27, #28, #29, #62, and #63. The database is
 PostgreSQL 18, accessed only from server code through Prisma ORM 7.10 and its
 `pg` driver adapter. Prisma 8 prereleases are deliberately excluded. The
 application still has no admin content mutations or public learning routes.
@@ -195,6 +195,47 @@ server; public projections are a separate task (#77). Topic, work, and source li
 
 Integration tests cover multiple-choice and ungraded written records end to end
 (store, map, grade) and assert the exact constraint behind each rejection.
+
+## Question associations and provenance
+
+Three tables connect a question to learning material and record where it came from.
+
+**Topics.** `QuestionTopic` links a question to any number of topics (and a topic
+to any number of questions); a link is unique per pair. The link stores the
+`subject`, and composite foreign keys to both `Question(id, subject)` and
+`Topic(id, subject)` force the question and the topic to share it, so a literature
+question cannot be filed under a language topic. A linked question's subject cannot
+change, and a topic that questions still use cannot be deleted: unlink it first.
+
+**Works.** `QuestionWork` optionally links a question to relevant works. Works exist
+only for literature, so the link's `subject` is fixed to `LITERATURE` (CHECK) and the
+foreign key to `Question(id, subject)` rejects a language question. A linked work
+cannot be deleted while questions use it. Deleting a question removes its topic and
+work links and its provenance, never the topics or works themselves.
+
+**Provenance.** `QuestionProvenance` is an optional one-to-one record; a question
+without one is simply unclassified.
+
+| Field | Visibility | Meaning |
+| --- | --- | --- |
+| `origin` | public | `ORIGINAL`, `ADAPTED`, or `OFFICIAL` |
+| `attribution` | public | credit line shown to students |
+| `sourceReference` | private | exact citation, such as document and page |
+| `editorName` | private | who wrote or adapted the question |
+| `reviewStatus`, `reviewedBy`, `reviewedAt`, `reviewNotes` | private | review metadata |
+
+Constraints: optional text is absent or contains a visible character (tabs and line
+breaks do not count as content); a review is either complete (`REVIEWED` with
+reviewer and date) or absent (`UNREVIEWED` with neither); and adapted or official
+material must have an attribution before it can be marked reviewed.
+
+[`findPublishedQuestionAssociations`](../src/features/questions/server/question-associations.ts)
+is the public projection. A draft question never resolves; only **published** topics
+and works are listed, so unpublished content is not revealed through a published
+question; and provenance is reduced to `origin` and `attribution`. Private editorial
+fields are never selected, and an integration test checks that none of them can
+appear in the output. Admin editing of links and provenance, and requiring review
+before publication (#73), are separate issues.
 
 ## Isolated persistence and browser tests
 
