@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Project-owned PostgreSQL clusters and generated Prisma/browser artifacts
+.local/
+src/generated/prisma/
+playwright-report/
+test-results/

@@ -1,8 +1,10 @@
 # Application foundation
 
 This foundation implements issues #6, #7, #8, #11, and #61 on top of the
-Node.js 24/npm decision already merged for #1. It introduces no database schema,
-authentication provider, exam rules, or final visual identity.
+Node.js 24/npm decision already merged for #1. That initial batch introduced no
+database schema, authentication provider, exam rules, or final visual identity.
+The next batch (#9, #10, #12, #27, #29) adds the [database foundation](DATABASE.md),
+author/topic persistence, and isolated integration/browser test infrastructure.
 
 ## Tooling decisions
 
@@ -43,9 +45,9 @@ and database name, and validates `NODE_ENV`. Its error lists invalid variable
 names, never raw values or Zod input details. It returns only declared fields.
 
 Validation is deliberately lazy: the static introductory page needs no database
-and must build without credentials. A future database entry point must call this
-function before constructing its connection. No database connection is opened by
-this foundation. Authentication variables will be introduced when the provider
+and must build without credentials. The database client now calls this function
+before constructing its connection, lazily at the first server query.
+Authentication variables will be introduced when the provider
 is chosen; no `NEXT_PUBLIC_*` configuration is required now.
 
 The environment tests pass explicit sample values or restore any process stubs.

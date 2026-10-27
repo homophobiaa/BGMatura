@@ -25,5 +25,8 @@ export default defineConfig([
       "@typescript-eslint/no-non-null-assertion": "error",
     },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "coverage/**", "next-env.d.ts"]),
+  globalIgnores([
+    ".next/**", "out/**", "build/**", "coverage/**", "next-env.d.ts",
+    ".local/**", "src/generated/prisma/**", "playwright-report/**", "test-results/**",
+  ]),
 ]);
