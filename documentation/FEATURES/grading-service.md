@@ -50,3 +50,28 @@ and nothing more.
 
 An ungraded or self-review result never carries points, so mixed results cannot
 count these questions as scored.
+
+## Written responses and essays
+
+`evaluateWrittenResponse(definition, submittedAnswer)` in `evaluate-written-response.ts`
+handles extended responses and argumentative writing. It never scores them. It
+returns a `WrittenResponseReview` for the attempt flow to record:
+
+| Field | Meaning |
+| --- | --- |
+| `questionId`, `submittedText` | Which question was answered and the text exactly as written |
+| `evaluation` | `self-review` for a `self-review` question, otherwise `ungraded` (`not-auto-gradable`) |
+| `referenceGuidance` | The editor's guidance, shown after submission |
+| `rubric` | The editor's optional criteria; empty when none exist |
+
+Rubric criteria may carry `indicativePoints` copied from the official rubric. These
+guide the student's own assessment and are never added to a score. The review has no
+earned or maximum points and its evaluation matches the shared `Evaluation` contract,
+so a mixed result cannot count a written item as correct or fully scored: only
+`scored` evaluations contribute points. A wrong question id or answer type throws
+`InvalidSubmittedAnswerError`; duplicate rubric identifiers or invalid indicative
+points throw `InvalidQuestionDefinitionError`. An empty submission is still recorded
+without a score.
+
+Persisting these reviews with an attempt belongs to the attempt and result issues;
+this service only produces what is recorded.
