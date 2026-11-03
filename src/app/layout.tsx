@@ -6,6 +6,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteNavigation } from "@/components/site-navigation";
 
 import "./globals.css";
+// Loaded here, in the page shell, and not only by the homepage: a stylesheet first imported inside
+// the root loading.tsx boundary makes React hold the homepage content back until a script reveals
+// it, so without JavaScript the student would see only the loading message.
+import "@/features/home/components/home.module.css";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],

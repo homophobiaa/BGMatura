@@ -1,0 +1,716 @@
+/*
+ * Homepage scene sequence. Everything outside the motion block below is the finished page that
+ * every student gets: without JavaScript, with reduced motion, without scroll-driven animations,
+ * and on very short screens. The motion block pins each scene with `position: sticky` and drives
+ * its choreography from the scene's own scroll timeline, so scrolling stays native.
+ * Rules: .claude/DESIGN.md section 10. Choreography: documentation/FEATURES/home-sequence.md.
+ */
+
+/* ---------- Finished, static page ---------- */
+
+.sequence {
+  display: grid;
+  gap: 3rem;
+}
+
+.stage {
+  display: grid;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.copy {
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+}
+
+.art {
+  display: none;
+}
+
+.titleLine {
+  display: block;
+}
+
+.order0 { --order: 0; }
+.order1 { --order: 1; }
+.order2 { --order: 2; }
+
+.scrollCue {
+  display: none;
+}
+
+.card {
+  --order: 1;
+  max-width: 40rem;
+  border-radius: 0.75rem;
+  background: var(--surface-card);
+  padding: 1rem;
+}
+
+.link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.sceneLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+  font-size: var(--text-label);
+}
+
+.sceneStart .copy {
+  justify-items: center;
+  text-align: center;
+}
+
+.underlined::after {
+  content: "";
+  margin-inline: auto;
+  display: block;
+  width: 4rem;
+  height: 3px;
+  margin-top: 1rem;
+  background: var(--coral-decorative);
+}
+
+@media (min-width: 48rem) {
+  .sequence { gap: 4rem; }
+  .card { padding: 1.5rem; }
+
+  .stage:has(.art:not(:empty)) {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 3rem;
+  }
+
+  .art {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    place-items: center;
+  }
+}
+
+/* ---------- Line art (finished state) ---------- */
+
+.book,
+.spread {
+  position: relative;
+  width: min(100%, 26rem);
+  aspect-ratio: 3 / 2;
+  perspective: 1400px;
+}
+
+.page,
+.face {
+  position: absolute;
+  border: 1.5px solid var(--ink);
+  background: var(--canvas);
+  padding: 14% 9%;
+}
+
+.page { inset-block: 0; width: 50%; }
+.face { inset: 0; backface-visibility: hidden; }
+.pageLeft, .coverBack, .turningBack { left: 0; border-radius: 0.75rem 0 0 0.75rem; }
+.pageRight, .coverFront, .turningFront { right: 0; border-radius: 0 0.75rem 0.75rem 0; }
+.coverBack, .turningBack { transform: rotateY(180deg); }
+
+/* Five ruled lines drawn as one gradient. */
+.lines {
+  display: block;
+  height: 4.5rem;
+  background: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--ink) 28%, transparent) 0 2px, transparent 2px 0.875rem);
+}
+
+.cover,
+.turningPage {
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  width: 50%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+}
+
+.cover { transform: rotateY(-180deg); }
+
+.coverFront {
+  display: grid;
+  place-content: center;
+  background: var(--surface-card);
+}
+
+.coverFront::before,
+.glyphLeft::before,
+.glyphRight::before {
+  display: block;
+  font-family: var(--font-literata), Georgia, serif;
+  line-height: 1;
+  color: var(--coral-decorative);
+}
+
+.coverFront::before {
+  content: "Б";
+  padding: 0.5rem 0.75rem;
+  border-block: 2px solid var(--ink);
+  font-size: 3rem;
+}
+
+.glyphLeft::before,
+.glyphRight::before {
+  margin-bottom: 1rem;
+  font-size: clamp(2.5rem, 7vw, 4.5rem);
+}
+
+.glyphLeft::before { content: "„"; }
+.glyphRight::before { content: "Ъ"; }
+
+.ribbon {
+  position: absolute;
+  top: -4%;
+  right: 18%;
+  width: 0.75rem;
+  height: 48%;
+  background: var(--coral-decorative);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+}
+
+.turningPage { display: none; }
+
+.options {
+  position: relative;
+  display: grid;
+  gap: 0.75rem;
+  width: min(100%, 22rem);
+  isolation: isolate;
+}
+
+/* An answer row: a radio circle and a line of text, both drawn. */
+.option {
+  position: relative;
+  display: block;
+  height: 3rem;
+  border: 1px solid var(--border-control);
+  border-radius: 0.5rem;
+}
+
+.option::before,
+.option::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+}
+
+.option::before {
+  left: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: -0.5625rem;
+  border: 1.5px solid var(--border-control);
+  border-radius: 9999px;
+}
+
+.option::after {
+  left: 3rem;
+  width: calc(65% - var(--index) * 15%);
+  height: 2px;
+  background: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.selection {
+  position: absolute;
+  z-index: -1;
+  inset-inline: 0;
+  top: 0;
+  height: 3rem;
+  border: 2px solid var(--primary);
+  border-radius: 0.5rem;
+  background: var(--surface-strong);
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  padding-inline: 0.875rem;
+  translate: 0 3.75rem;
+}
+
+/* The check mark that settles on the chosen answer. */
+.selection::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.875rem;
+  margin: -0.25rem 0.375rem 0 0;
+  border: solid var(--success);
+  border-width: 0 2.5px 2.5px 0;
+  rotate: 45deg;
+}
+
+.clock {
+  position: relative;
+  width: min(100%, 14rem);
+  aspect-ratio: 1;
+  border: 2px solid var(--ink);
+  border-radius: 9999px;
+}
+
+/* Twelve hour marks drawn as one conic gradient, cut to a ring. */
+.clock::before {
+  content: "";
+  position: absolute;
+  inset: 6%;
+  border-radius: 9999px;
+  background: repeating-conic-gradient(from -1deg, var(--ink) 0 2deg, transparent 2deg 30deg);
+  mask: radial-gradient(closest-side, transparent 84%, black 85%);
+}
+
+/* The hub. */
+.clock::after {
+  content: "";
+  position: absolute;
+  inset: calc(50% - 0.375rem);
+  border-radius: 9999px;
+  background: var(--coral-decorative);
+}
+
+.hand {
+  position: absolute;
+  left: calc(50% - 1.5px);
+  bottom: 50%;
+  width: 3px;
+  height: 36%;
+  border-radius: 2px;
+  background: var(--ink);
+  transform-origin: 50% 100%;
+  rotate: 300deg;
+}
+
+/* ---------- Scroll-driven version ---------- */
+
+/*
+ * Only when the student has not asked for less motion, the browser supports scroll timelines,
+ * and the screen is tall enough for a pinned scene. Each scene is a tall section whose stage
+ * sticks to the top; `--scene` is the section's view timeline:
+ *   entry   – the section's top travels from the bottom of the viewport to the top (the stage slides in),
+ *   contain – the stage is pinned,
+ *   exit    – the section's bottom travels up and the stage slides out.
+ * All readable text has arrived by entry 66% and only starts to leave after exit 30%, so an
+ * anchor jump or find in page, which land at a scene's start or end, always show readable text.
+ */
+@media (prefers-reduced-motion: no-preference) and (min-height: 34rem) {
+  @supports (animation-timeline: view()) {
+    .sequence { gap: 0; }
+
+    .scene {
+      height: var(--scene-length);
+      view-timeline: --scene block;
+    }
+
+    .sceneTitle { --scene-length: 170svh; }
+    .sceneLearn { --scene-length: 200svh; }
+    .scenePractice { --scene-length: 180svh; }
+    .sceneExam { --scene-length: 180svh; }
+    .sceneStart { --scene-length: 130svh; }
+
+    /*
+     * The stage is pinned by `sticky` while the section covers the viewport (contain). While the
+     * section slides in (entry) or out (exit), a linear translation cancels the scroll, so the stage
+     * holds still and the next scene dissolves in where the last one dissolved out. The translation
+     * must stay linear: any easing here would make the stage drift against the scroll.
+     */
+    .stage {
+      position: sticky;
+      top: 0;
+      height: 100svh;
+      overflow: clip;
+      /* A column: the text takes what it needs and the drawing gets the rest. Flex lays the text
+         out once; a grid with an auto row and a 1fr row measured it twice before first paint. */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-block: 1.5rem;
+      animation-name: hold-in, hold-out;
+      animation-duration: auto, auto;
+      animation-timing-function: linear, linear;
+      /*
+       * No fill: outside entry and exit the stage must sit at its real place, because the browser
+       * scrolls to the transformed box when it follows an anchor, moves focus, or finds text.
+       * Both holds are 0 at the ends that touch the pinned range, so nothing jumps.
+       */
+      animation-fill-mode: none, none;
+      animation-timeline: --scene, --scene;
+      animation-range: entry 0% entry 100%, exit 0% exit 100%;
+      /*
+       * During a hand-over two stages cover the same screen. The stages themselves let clicks
+       * through; only content takes them, and the keyframes below switch that off while the
+       * content is less than half visible, so an invisible link can never catch a tap.
+       */
+      pointer-events: none;
+    }
+
+    .reveal, .leave, .card, .splitLeft, .splitRight { pointer-events: auto; }
+
+    /*
+     * Only the title scene is on screen when the page opens. The browser may skip rendering the
+     * other stages until they come near, which keeps their text and animated layers out of the
+     * first frame. Their content stays in the DOM, so find in page, anchors, and screen readers
+     * still reach it. The stage's own height is fixed, so skipping its content changes no layout.
+     */
+    .scene:not(.sceneTitle) .stage { content-visibility: auto; }
+
+    /*
+     * The scroll cue sits at the bottom of the viewport (the title stage starts below the header,
+     * so its own bottom is off screen) and fades out over the first stretch of the pinned scene.
+     * It lives outside the stage: the stage's scroll animation makes it the containing block for
+     * fixed descendants, which would pin the cue to the stage instead of the viewport.
+     * The chevron nudges three times on arrival: under five seconds, so no pause control needed.
+     * On short screens the text already runs past the fold, which says "scroll" by itself.
+     */
+    .scrollCue {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      translate: -50% 0;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+      padding: 0.25rem 1rem;
+      border-radius: 9999px;
+      background: color-mix(in srgb, var(--canvas) 92%, transparent);
+      color: var(--ink);
+      font-size: var(--text-label);
+      text-decoration: none;
+      pointer-events: auto;
+      animation: cue-out linear forwards;
+      animation-timeline: --scene;
+      animation-range: contain 0% contain 15%;
+    }
+
+    .scrollCue svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: var(--primary);
+      animation: cue-nudge 1.2s var(--ease-standard) 1s 3 both;
+    }
+
+    @media (max-height: 40rem) {
+      .scrollCue { display: none; }
+    }
+
+    /* The title scene is already on screen when the page opens, and the last scene hands over to the
+       ordinary page below it, so neither holds at that end. */
+    .sceneTitle .stage {
+      justify-content: start;
+      padding-top: 0;
+      animation-name: hold-out;
+      animation-fill-mode: none;
+      animation-range: exit 0% exit 100%;
+    }
+
+    .sceneStart .stage {
+      animation-name: hold-in;
+      animation-fill-mode: none;
+      animation-range: entry 0% entry 100%;
+    }
+
+    /* Side by side from tablet width up, as in the static layout: one row, measured once. */
+    @media (min-width: 48rem) {
+      .stage { display: grid; align-content: center; }
+      .sceneTitle .stage { align-content: start; }
+    }
+
+    .art {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      place-items: center;
+      flex: 1 1 0;
+      align-self: stretch;
+      min-height: 0;
+      /* On short screens the text takes the room it needs and the drawing gives way. */
+      overflow: clip;
+      animation-name: art-arrive, art-leave;
+      animation-duration: auto, auto;
+      animation-fill-mode: both, forwards;
+      animation-timeline: --scene, --scene;
+      animation-range: entry 40% entry 85%, exit 0% exit 45%;
+      animation-timing-function: var(--ease-enter), var(--ease-exit);
+    }
+
+    .sceneTitle .art {
+      animation-name: art-leave;
+      animation-fill-mode: forwards;
+      animation-range: exit 0% exit 45%;
+      animation-timing-function: var(--ease-exit);
+    }
+
+    /*
+     * On phones the book sits below the opening text and would only add work to the first frame,
+     * which delayed Largest Contentful Paint (documentation/FEATURES/home-sequence.md). It is
+     * left out until the title scene pins, then fades in as the cover starts to open.
+     */
+    @media (max-width: 47.99rem) {
+      /* Not display: none, which would stop the element's own animations from ever running. */
+      .sceneTitle .art {
+        content-visibility: hidden;
+        animation-name: book-unveil, art-leave;
+        animation-duration: auto, auto;
+        animation-fill-mode: forwards, forwards;
+        animation-timeline: --scene, --scene;
+        animation-range: contain 0% contain 12%, exit 0% exit 45%;
+        animation-timing-function: var(--ease-enter), var(--ease-exit);
+      }
+    }
+
+    .art { container-type: size; }
+    .art > * { max-height: 100%; }
+
+    /* A sliver of a drawing reads as a glitch: below this height there is no drawing at all. */
+    @container (max-height: 7.5rem) {
+      .art > * { display: none; }
+    }
+    .book, .spread { width: min(100%, 26rem, 52svh); }
+    .clock { width: min(100%, 14rem, 30svh); }
+
+    /*
+     * Exit before enter: the outgoing scene dissolves during the first half of the hand-over
+     * (its exit 5–50%), the incoming one rises in during the second half (its entry 45–91%),
+     * one item after another.
+     */
+    .reveal {
+      animation: rise-in linear both;
+      animation-timeline: --scene;
+      animation-range: entry calc(45% + var(--order, 0) * 8%) entry calc(75% + var(--order, 0) * 8%);
+      animation-timing-function: var(--ease-enter);
+    }
+
+    .leave {
+      animation: drift-out linear forwards;
+      animation-timeline: --scene;
+      animation-range: exit 5% exit 50%;
+      animation-timing-function: var(--ease-exit);
+    }
+
+    .reveal.leave,
+    .card {
+      animation-name: rise-in, drift-out;
+      animation-fill-mode: both, forwards;
+      animation-timeline: --scene, --scene;
+      animation-range:
+        entry calc(45% + var(--order, 0) * 8%) entry calc(75% + var(--order, 0) * 8%),
+        exit 5% exit 50%;
+      animation-timing-function: var(--ease-enter), var(--ease-exit);
+    }
+
+    /* Scene 1: scrolling away splits the title into its two lines; scrolling back reassembles it. */
+    .splitLeft, .splitRight {
+      animation: split-left linear forwards;
+      animation-timeline: --scene;
+      animation-range: exit 5% exit 50%;
+      animation-timing-function: var(--ease-exit);
+    }
+
+    .splitRight { animation-name: split-right; }
+
+    .book .cover {
+      animation: cover-open linear both;
+      animation-timeline: --scene;
+      animation-range: contain 0% contain 60%;
+      animation-timing-function: var(--ease-standard);
+    }
+
+    .book {
+      animation: book-center linear both;
+      animation-timeline: --scene;
+      animation-range: contain 0% contain 60%;
+      animation-timing-function: var(--ease-standard);
+    }
+
+    .book .lines {
+      animation: write linear both;
+      animation-timeline: --scene;
+      animation-range: contain 40% contain 75%;
+      animation-timing-function: var(--ease-enter);
+    }
+
+    .ribbon {
+      animation: ribbon-drop linear both;
+      animation-timeline: --scene;
+      animation-range: contain 55% contain 85%;
+      animation-timing-function: var(--ease-spring-expressive);
+    }
+
+    /* Scene 2: the glyphs settle on their pages, lines are written, and a page turns. */
+    .glyphLeft::before, .glyphRight::before {
+      animation: glyph-from-left linear both;
+      animation-timeline: --scene;
+      animation-range: contain 0% contain 35%;
+      animation-timing-function: var(--ease-enter);
+    }
+
+    .glyphRight::before { animation-name: glyph-from-right; animation-range: contain 10% contain 45%; }
+
+    .spread .lines {
+      animation: write linear both;
+      animation-timeline: --scene;
+      animation-range: contain 15% contain 45%;
+      animation-timing-function: var(--ease-enter);
+    }
+
+    .turningPage {
+      display: block;
+      animation: page-turn linear both;
+      animation-timeline: --scene;
+      animation-range: contain 45% contain 95%;
+    }
+
+    /* Scene 3: options appear, the selection hesitates between them, then settles with a check. */
+    .option {
+      animation: rise-in linear both;
+      animation-timeline: --scene;
+      animation-range: entry calc(55% + var(--index) * 8%) entry calc(80% + var(--index) * 8%);
+      animation-timing-function: var(--ease-enter);
+    }
+
+    .selection {
+      animation-name: fade-in, choose;
+      animation-duration: auto, auto;
+      animation-timing-function: var(--ease-standard), linear;
+      animation-fill-mode: both, both;
+      animation-timeline: --scene, --scene;
+      animation-range: entry 75% entry 100%, contain 5% contain 75%;
+    }
+
+    .selection::after {
+      animation: settle linear both;
+      animation-timeline: --scene;
+      animation-range: contain 75% contain 92%;
+      animation-timing-function: var(--ease-spring-expressive);
+    }
+
+    /* Scene 4: the hand sweeps once around the face. */
+    .hand {
+      animation: sweep linear both;
+      animation-timeline: --scene;
+      animation-range: contain 0% contain 90%;
+    }
+
+    /* Scene 5: the call to action arrives last and is underlined while it holds. */
+    .underlined::after {
+      animation: draw-line linear both;
+      animation-timeline: --scene;
+      animation-range: contain 0% contain 45%;
+      animation-timing-function: var(--ease-enter);
+    }
+  }
+}
+
+/* Entry and exit each last exactly one viewport of scrolling (dvh follows mobile toolbars). */
+@keyframes hold-in {
+  from { translate: 0 -100dvh; }
+  to { translate: 0 0; }
+}
+
+@keyframes hold-out {
+  from { translate: 0 0; }
+  to { translate: 0 100dvh; }
+}
+
+/* content-visibility is held at visible for the whole animation, so the book is rendered only
+   once its range starts. */
+@keyframes book-unveil {
+  from { content-visibility: visible; opacity: 0; }
+  to { content-visibility: visible; opacity: 1; }
+}
+
+@keyframes cue-out {
+  to { opacity: 0; pointer-events: none; }
+}
+
+@keyframes cue-nudge {
+  50% { translate: 0 var(--motion-distance-sm); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes art-arrive {
+  from { opacity: 0; scale: 0.94; }
+}
+
+/* pointer-events is discrete: it flips halfway, when the content is half visible. */
+@keyframes rise-in {
+  from { opacity: 0; translate: 0 var(--motion-distance-xl); pointer-events: none; }
+}
+
+@keyframes drift-out {
+  to { opacity: 0; translate: 0 calc(-1 * var(--motion-distance-lg)); pointer-events: none; }
+}
+
+@keyframes art-leave {
+  to { opacity: 0; scale: 1.06; }
+}
+
+@keyframes split-left {
+  to { opacity: 0; translate: calc(-1 * var(--motion-distance-xl)) 0; pointer-events: none; }
+}
+
+@keyframes split-right {
+  to { opacity: 0; translate: var(--motion-distance-xl) 0; pointer-events: none; }
+}
+
+@keyframes cover-open {
+  from { transform: rotateY(0deg); }
+}
+
+@keyframes book-center {
+  from { translate: -25% 0; }
+}
+
+@keyframes draw-line {
+  from { scale: 0 1; }
+}
+
+/* Lines are written left to right. */
+@keyframes write {
+  from { clip-path: inset(0 100% 0 0); }
+}
+
+@keyframes ribbon-drop {
+  from { translate: 0 -60%; opacity: 0; }
+  30% { opacity: 1; }
+}
+
+@keyframes glyph-from-left {
+  from { opacity: 0; translate: calc(-1 * var(--motion-distance-lg)) 0; }
+}
+
+@keyframes glyph-from-right {
+  from { opacity: 0; translate: var(--motion-distance-lg) 0; }
+}
+
+@keyframes page-turn {
+  from { transform: rotateY(0deg); opacity: 1; }
+  88% { transform: rotateY(-180deg); opacity: 1; }
+  to { transform: rotateY(-180deg); opacity: 0; }
+}
+
+@keyframes choose {
+  from { translate: 0 0; animation-timing-function: var(--ease-standard); }
+  40% { translate: 0 7.5rem; animation-timing-function: var(--ease-standard); }
+  to { translate: 0 3.75rem; }
+}
+
+@keyframes settle {
+  from { opacity: 0; scale: 0.4; }
+}
+
+@keyframes sweep {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
