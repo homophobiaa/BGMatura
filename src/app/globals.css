@@ -18,6 +18,34 @@
   --error: #a83434;
   --warning: #7a5600;
   --pending: var(--muted);
+
+  /* Motion tokens. Rules: .claude/DESIGN.md section 10. Typed copy: src/lib/motion.ts. */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-moderate: 320ms;
+  --duration-slow: 480ms;
+  --duration-deliberate: 720ms;
+  --duration-spring-calm: 720ms;
+  --duration-spring-expressive: 580ms;
+  --stagger-tight: 40ms;
+  --stagger-base: 80ms;
+  --stagger-max-total: 400ms;
+  --motion-distance-xs: 4px;
+  --motion-distance-sm: 8px;
+  --motion-distance-md: 16px;
+  --motion-distance-lg: 32px;
+  --motion-distance-xl: 64px;
+}
+
+/* Reduced motion keeps fades but removes travel: anything that moves by a distance token stays put. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-distance-xs: 0px;
+    --motion-distance-sm: 0px;
+    --motion-distance-md: 0px;
+    --motion-distance-lg: 0px;
+    --motion-distance-xl: 0px;
+  }
 }
 
 @theme inline {
@@ -75,6 +103,13 @@
   --text-caption: 0.875rem;
   --text-caption--line-height: 1.4;
   --container-reading: 70ch;
+
+  /* Easing utilities: ease-standard, ease-enter, ease-exit, ease-spring-calm, ease-spring-expressive. */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-spring-calm: linear(0, 0.059, 0.184, 0.327, 0.462, 0.58, 0.678, 0.757, 0.818, 0.865, 0.901, 0.928, 0.947, 0.962, 0.973, 0.98, 0.986, 0.99, 0.993, 0.995, 0.996, 0.997, 0.998, 0.999, 1);
+  --ease-spring-expressive: linear(0, 0.048, 0.162, 0.305, 0.453, 0.59, 0.71, 0.807, 0.883, 0.939, 0.978, 1.004, 1.019, 1.026, 1.028, 1.027, 1.024, 1.02, 1.016, 1.012, 1.008, 1.006, 1.003, 1.002, 1);
 }
 
 @media (min-width: 48rem) {

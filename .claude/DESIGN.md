@@ -10,7 +10,7 @@ BG Matura should feel like a calm, well-made study book: warm paper, clear type,
 
 - **Name and wordmark:** "BG Matura" set in the display serif (section 4) in `ink`. No logo glyph is required for the MVP; if one is created later, it must be original.
 - **Voice:** plain, encouraging Bulgarian. Short sentences. Address the student directly („Започни теста“, not „Тестът може да бъде започнат“).
-- **Mood:** literary and calm. Colour and motion are used to guide attention, never to decorate.
+- **Mood:** literary and calm. Colour is used to guide attention, never to decorate. Motion guides attention everywhere; on public showcase pages it may also be expressive, like turning the pages of a well-made book, under the rules of section 10. Where a student reads, practises, or takes an exam, motion stays calm and only explains what changed.
 
 ### Not allowed
 
@@ -167,7 +167,7 @@ These rules resolve the accessibility gaps of the original reference and follow 
 - **Touch targets:** every interactive element at least **44×44px**, including icon buttons (the original reference used 36px). Adjacent targets have at least 8px between them.
 - **Focus:** every focusable element shows a visible focus ring: 2px `primary` outline with 2px offset. Never remove outlines without a replacement.
 - **Keyboard:** the full exam flow (choose answer, move between questions, submit) works with the keyboard alone.
-- **Motion:** no essential information in animation; respect `prefers-reduced-motion`.
+- **Motion:** no essential information in animation; respect `prefers-reduced-motion`; never take over scrolling; nothing flashes more than three times per second. The full rules are in section 10.
 - **Language:** pages declare `lang="bg"`.
 - **Status:** correct/wrong/ungraded states use colour, icon, and text together.
 
@@ -185,8 +185,96 @@ These rules resolve the accessibility gaps of the original reference and follow 
 - Don't use `coral-decorative` for text or controls.
 - Don't add gamification (streaks, confetti, leaderboards) or dashboard clutter.
 - Don't use pure white or cool grey as the page background.
+- Don't animate anything on practice or exam answering screens beyond the essential feedback allowed in section 10.
+- Don't use smooth-scroll libraries, scroll snapping that traps the reader, or anything else that takes scrolling away from the browser.
 
-## 10. Open items
+## 10. Motion
+
+Motion in BG Matura has one vocabulary. The values below are design tokens in `src/app/globals.css` and, for scripted motion, typed constants in `src/lib/motion.ts`; a unit test keeps them identical. Tooling decisions, measured bundle costs, and the measuring method are recorded in [documentation/MOTION.md](../documentation/MOTION.md).
+
+### 10.1 Where motion is allowed
+
+Every surface belongs to one tier. A page that is not listed belongs to the **content** tier until it is added here.
+
+| Tier | Surfaces | Allowed |
+| --- | --- | --- |
+| **Showcase** | Home page `/`, learning hub `/uchi`, about page `/za-proekta` | Expressive and scroll-driven motion, scene sequences, the `slow` and `deliberate` durations, the `xl` distance, the expressive spring. Never on the first paint of the main heading (see 10.6). |
+| **Content** | Catalogues and reading pages: `/literatura`, `/avtori/*`, `/balgarski-ezik`, `/testove` and `/matura` topic and simulation lists, page transitions | A short reveal when a block first enters (at most `moderate`, at most `md` distance), state transitions, page transitions. Text that a student is reading never moves. No scroll-scrubbed animation of reading text. |
+| **Focus** | Practice and exam answering screens (`/testove/[id]`, `/matura/[id]`), result review, the exam timer, every admin page | Only essential feedback: an answer becoming selected, a validation message appearing, the navigator updating, a dialog opening. At most `base` duration, at most `sm` distance, the calm spring only. No scroll-linked, ambient, looping, or staggered motion, and nothing that moves while the student reads or answers a question. |
+
+### 10.2 Tokens
+
+| Token | CSS | Value | Use |
+| --- | --- | --- | --- |
+| Duration `fast` | `--duration-fast` | 120ms | Hover, press, and focus feedback. |
+| Duration `base` | `--duration-base` | 200ms | Small state changes; the limit in the focus tier. |
+| Duration `moderate` | `--duration-moderate` | 320ms | Panels, content entering the page; the limit in the content tier. |
+| Duration `slow` | `--duration-slow` | 480ms | Showcase entrances. |
+| Duration `deliberate` | `--duration-deliberate` | 720ms | The longest time-based animation allowed anywhere. Showcase only. |
+| Easing `standard` | `ease-standard` | cubic-bezier(0.2, 0, 0, 1) | A change of state in place. |
+| Easing `enter` | `ease-enter` | cubic-bezier(0.16, 1, 0.3, 1) | Something arriving. |
+| Easing `exit` | `ease-exit` | cubic-bezier(0.7, 0, 0.84, 0) | Something leaving. |
+| Spring `calm` | `ease-spring-calm` + `--duration-spring-calm` | stiffness 169, damping 26, mass 1 (critically damped, settles in 720ms) | Anything a student touches. No overshoot. |
+| Spring `expressive` | `ease-spring-expressive` + `--duration-spring-expressive` | stiffness 196, damping 21, mass 1 (about 3% overshoot, settles in 580ms) | Showcase only. |
+| Stagger `tight` | `--stagger-tight` | 40ms | Items of a list or grid. |
+| Stagger `base` | `--stagger-base` | 80ms | A few large blocks. |
+| Stagger maximum | `--stagger-max-total` | 400ms | No sequence takes longer from first item to last; later items share the last delay. |
+| Distance `xs` … `xl` | `--motion-distance-xs` … `-xl` | 4, 8, 16, 32, 64px | How far something travels. `xl` is showcase only. All are 0 with reduced motion. |
+
+The springs are also available in pure CSS: `linear()` curves sampled from the same physics, used with their matching duration.
+
+### 10.3 Choreography
+
+1. **One thing leads.** In every composition the content leads (the heading, the question, the card that was chosen), supporting text follows, controls come next, and decoration comes last. Decoration never moves before or more than the content it accompanies.
+2. **Exit before enter.** What leaves goes first and faster (about two thirds of the entering duration, `ease-exit`); what arrives follows with `ease-enter`. Never cross two pieces of readable text at full opacity.
+3. **Move together, move alike.** Elements that move at the same time share a direction and an easing. At most three groups move at once.
+4. **Direction has meaning.** Vertical travel reveals (content rises into place by a distance token). Horizontal travel means sequence: next goes left, previous goes right. One axis per element; text is never rotated or skewed.
+5. **Keep it near.** Scale changes stay between 0.96 and 1 everywhere except showcase illustrations. Nothing travels further than its distance token.
+6. **Arrived text stays still.** Once text is readable, it does not drift, bob, or loop. Hover never moves layout; it may only change colour or a decorative underline.
+7. **Scroll-driven motion is a scrub, not a trigger.** Progress follows the scroll position one to one, the timeline itself is linear (shape it with easings inside the keyframes), and scrolling back plays it backwards exactly. A scroll position never starts a time-based animation that cannot be reversed.
+
+### 10.4 Reduced motion
+
+`prefers-reduced-motion: reduce` gets an equivalent for every animation, never a missing piece.
+
+- **The final state is the markup.** Build every element in its finished, readable position and animate *from* an offset. Without JavaScript, without support for a CSS feature, and with reduced motion, the student sees that finished state.
+- **No travel.** With reduced motion the distance tokens become 0, so token-based transforms stay put. Do not add scale, parallax, rotation, or scroll-linked animation; scroll-driven sequences become ordinary stacked sections with the same content and controls.
+- **Fades stay.** Opacity and colour transitions of at most `base` duration remain, because they explain a change without movement. View Transitions become an instant swap or a crossfade of at most `base`.
+- **One check.** CSS uses the `motion-safe:` / `motion-reduce:` variants or the media query. Scripts use `usePrefersReducedMotion()` or `prefersReducedMotion()` from `src/lib/reduced-motion.ts`, which answer "reduce" whenever the preference is unknown (on the server, before hydration). Never re-implement the check.
+
+### 10.5 Pause, stop, and flashing
+
+- Scroll-driven motion moves only while the reader scrolls, so it needs no pause control, but it must stop the moment scrolling stops.
+- Anything time-based that moves, blinks, or loops for longer than five seconds has a visible pause or stop control, and does not run at all with reduced motion. Loading spinners are essential and exempt from the control, but they still stop with reduced motion (`motion-reduce:animate-none`, as `Button` already does).
+- Nothing flashes more than three times in any one second. Large areas never alternate between light and dark; a change of brightness over more than a quarter of the viewport takes at least `base`.
+
+### 10.6 Performance budget
+
+| Budget | Limit | How it is measured |
+| --- | --- | --- |
+| Frame rate | Steady 60 fps on a mid-range phone; no frame over 16.7ms caused by our motion. | Chrome DevTools Performance panel with 4× CPU throttling as the mid-range-phone proxy, recording a scroll through the motion; plus the in-page frame-time script in `documentation/MOTION.md`. |
+| Properties | Only `transform`, `opacity`, `clip-path`, and small cheap `filter` values are animated. Never `width`, `height`, `top`, `left`, `margin`, `padding`, `box-shadow`, or font properties. | Code review; the Performance panel shows no Layout or Paint work during the animation. |
+| Layout shift | 0 added Cumulative Layout Shift. Motion uses transforms, so the layout box never moves. | `PerformanceObserver` for `layout-shift` entries while loading and scrolling (script in `documentation/MOTION.md`), or Lighthouse. |
+| Largest Contentful Paint | No regression. The main heading (the usual LCP element) is fully visible in its final place at first paint, without JavaScript, and is never faded in. | Lighthouse mobile preset, median of three runs before and after the change, and the `largest-contentful-paint` observer. |
+| Added JavaScript | Focus tier: 0 KB. Content tier: at most 5 KB gzip per route. Showcase: at most 10 KB gzip per route in the initial load, and at most 30 KB gzip in total including lazy-loaded chunks. Motion code loads only on the routes that use it. | Sum of `transferSize` of script resources for the route before and after (script in `documentation/MOTION.md`); every motion pull request states the result. |
+
+### 10.7 Tooling
+
+In order of preference (details, versions, measured costs, and fallbacks in `documentation/MOTION.md`):
+
+1. **CSS**: transitions, keyframes, `@starting-style`, and **scroll-driven animations** (`animation-timeline: view()` / `scroll()`) for anything tied to scrolling. They run without JavaScript and off the main thread.
+2. **View Transitions API** for page and state transitions.
+3. **Motion `animate()` from `motion/mini`** (3.2 KB gzip, measured) when a script really has to drive an animation, lazy-loaded.
+
+Not adopted: `motion/react` components, GSAP with ScrollTrigger, and every smooth-scroll library (Lenis and similar). Adding any of them is a design decision recorded here first.
+
+### 10.8 Interaction and focus
+
+- Keyboard, touch, and screen reader users reach everything that motion reveals. Content that is hidden at some point of an animation is still in the DOM in reading order and is never `display: none` or `visibility: hidden` only because of an animation stage.
+- A transition never moves or traps focus. Targets stay at least 44×44px through the whole animation.
+- Native scrolling, keyboard scrolling (Space, Page Down, arrow keys), anchor links, find in page, and back/forward always keep working.
+
+## 11. Open items
 
 - An original BG Matura logo is not designed yet; the serif wordmark is used until then.
 - Dark mode is not part of the MVP.
