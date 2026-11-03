@@ -1,0 +1,95 @@
+name: CI
+
+# Runs for every pull request and for every push to main. Pull requests from forks get no
+# secrets, and this workflow needs none: the test database below uses no credentials.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# The default token can only read the repository. Nothing here writes to it.
+permissions:
+  contents: read
+
+# A newer push to the same pull request replaces the run that is still going.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  checks:
+    name: Lint, types, unit tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      # Installs exactly what package-lock.json records and fails if it is out of date.
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      # The build needs no database and no environment variables.
+      - run: npm run build
+
+  database-tests:
+    name: Database integration and browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      # A throwaway PostgreSQL that exists only for this job. It listens on the exact
+      # target the test runner accepts (user and database bgmatura_test, port 55433) and
+      # uses trust authentication, so no password or secret is stored anywhere.
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: bgmatura_test
+          POSTGRES_DB: bgmatura_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd "pg_isready -U bgmatura_test -d bgmatura_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://bgmatura_test@127.0.0.1:55433/bgmatura_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Applies the committed migrations to the service database, then runs the tests.
+      - run: npm run test:integration
+
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+      - name: Keep browser traces of a failed run
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-traces
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7

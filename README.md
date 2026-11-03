@@ -126,6 +126,10 @@ list variable names rather than values. See [foundation boundaries](documentatio
 | `npm run test:integration` | Apply committed migrations to the guarded local test database and run persistence/constraint/rollback tests. |
 | `npm run test:e2e` | Run Chromium desktop/mobile smoke tests against a dedicated server using only the guarded test database. |
 
+GitHub Actions runs these checks for every pull request and every push to `main`;
+see [CONTINUOUS_INTEGRATION.md](documentation/CONTINUOUS_INTEGRATION.md) for the
+required check names, the isolated test database, and how secrets are protected.
+
 Unit tests live next to their owning feature/module as `*.test.ts`. Vitest uses
 the same `@/*` source alias as the application. Environment tests cover invalid
 configuration and safe errors; assessment tests cover score bounds and the
