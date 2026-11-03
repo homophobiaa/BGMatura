@@ -42,6 +42,7 @@ model Topic {
   position  Int               @default(0)
   status    PublicationStatus @default(DRAFT)
   questions QuestionTopic[]
+  lessons   Lesson[]
   createdAt DateTime          @default(now()) @db.Timestamptz(3)
   updatedAt DateTime          @updatedAt @db.Timestamptz(3)
 
@@ -55,6 +56,23 @@ enum QuestionType {
   SHORT_RESPONSE
   EXTENDED_RESPONSE
   ARGUMENTATIVE_WRITING
+}
+
+/// A language lesson belongs to one required primary topic (which may be a subtopic).
+model Lesson {
+  id        String            @id @default(uuid()) @db.Uuid
+  title     String
+  slug      String            @unique
+  topicId   String            @db.Uuid
+  subject   Subject           @default(BULGARIAN_LANGUAGE)
+  topic     Topic             @relation(fields: [topicId, subject], references: [id, subject], onDelete: Restrict, onUpdate: Restrict)
+  /// Versioned learningContentSchema document, never raw HTML.
+  content   Json              @default("{\"version\":1,\"blocks\":[]}")
+  status    PublicationStatus @default(DRAFT)
+  createdAt DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime          @updatedAt @db.Timestamptz(3)
+
+  @@index([topicId, status, title, id])
 }
 
 enum AssessmentMode {
