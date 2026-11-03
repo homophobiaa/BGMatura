@@ -299,12 +299,17 @@ inside transactions rolled back even after failed assertions; the concurrency
 test cleans only its own randomly identified records. There is no truncate-all,
 test reset, or production data cleanup. Test shutdown closes Prisma pools.
 
-Playwright owns an isolated Next.js development server on loopback port **3102**
+Playwright owns an isolated Next.js production server on loopback port **3102**
 and refuses to reuse another server. Its database environment is the validated
-test URL. Chromium desktop and mobile smoke tests check anonymous page access,
-Bulgarian metadata, readable layout without horizontal overflow, and HTTP 404.
+test URL. The runner builds first. Chromium desktop, mobile, and tablet tests
+check anonymous access, safe learning pages, URL search/filter state, draft
+isolation, keyboard navigation, readable layout without overflow, and HTTP 404.
 Failures can retain ignored traces; never upload traces containing sensitive
 content without reviewing them.
 
 `npm test` remains the database-free unit suite. Integration and browser tests
 are explicit commands, with their service/browser prerequisites documented here.
+
+Public pages additionally enforce published ancestry and safe stored blocks;
+see [public learning](FEATURES/public-learning.md). They reuse the lesson model
+and versioned content format from the existing #26/#30 branches.

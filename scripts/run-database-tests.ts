@@ -11,11 +11,21 @@ async function run(): Promise<void> {
   }
   const candidate = process.env.TEST_DATABASE_URL ?? (await getLocalDatabaseSettings("test")).connectionString;
   const databaseUrl = assertTestDatabaseUrl(candidate);
-  const environment: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: "test", DATABASE_URL: databaseUrl };
+  const environment: NodeJS.ProcessEnv = {
+    ...process.env, NODE_ENV: "test", DATABASE_URL: databaseUrl,
+    ...(mode === "browser" ? { SITE_URL: "http://127.0.0.1:3102" } : {}),
+  };
 
   execFileSync(process.execPath, [
     join(repositoryRoot, "node_modules/prisma/build/index.js"), "migrate", "deploy", "--config", "prisma7.config.ts",
   ], { cwd: repositoryRoot, env: environment, stdio: "inherit" });
+
+  if (mode === "browser") {
+    // Exercise the same compiled assets users receive, without dev compilation races.
+    execFileSync(process.execPath, [join(repositoryRoot, "node_modules/next/dist/bin/next"), "build"], {
+      cwd: repositoryRoot, env: { ...environment, NODE_ENV: "production" }, stdio: "inherit",
+    });
+  }
 
   const command = mode === "integration"
     ? [join(repositoryRoot, "node_modules/vitest/vitest.mjs"), "run", "--config", "vitest.integration.config.ts"]

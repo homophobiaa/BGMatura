@@ -35,6 +35,6 @@ export async function findPublishedWorkBySlug(slug: string, database: WorkDataba
 
   return {
     ...studyFields,
-    author: author.status === "PUBLISHED" ? { name: author.name, slug: author.slug } : null,
+    author: author?.status === "PUBLISHED" ? { name: author.name, slug: author.slug } : null,
   };
 }

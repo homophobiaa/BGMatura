@@ -5,7 +5,7 @@ test("public introduction is readable without registration", async ({ page }) =>
   expect(response?.status()).toBe(200);
   await expect(page.locator("html")).toHaveAttribute("lang", "bg");
   await expect(page).toHaveTitle("BG Matura — подготовка за ДЗИ по БЕЛ");
-  await expect(page.getByRole("heading", { name: "BG Matura", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Учи с разбиране/ })).toBeVisible();
   await expect(page.getByText(/Платформата е в разработка/)).toBeVisible();
   const dimensions = await page.evaluate(() => ({
     width: window.innerWidth,

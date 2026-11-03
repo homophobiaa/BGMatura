@@ -8,7 +8,13 @@ BG Matura brings study material, interactive practice, timed exam simulations, a
 
 ## Project status
 
-The application foundation now runs: a Bulgarian introductory page, strict TypeScript/lint checks, server environment validation, and typed question/evaluation contracts. The server has Prisma/PostgreSQL persistence for authors, works, topics, lessons, and question definitions, with unit, database integration, and desktop/mobile browser smoke tests. Lessons use the [validated structured content format](documentation/FEATURES/learning-content.md). The capabilities below describe the planned MVP, not completed features. Public learning pages, editorial forms, practice, exams, and authentication are not implemented yet.
+The public Bulgarian shell and learning pages now run: literature search/filtering,
+author/work details, language topics, and structured lessons, all limited to
+published records. PostgreSQL/Prisma stores learning content and the shared
+question bank; server grading supports objective and explicitly ungraded written
+responses. Unit, database integration, and production browser tests cover these
+foundations. Editorial forms, practice sessions, exams, and authentication remain
+unfinished. No reviewed educational content is automatically seeded.
 
 The planning target is a usable release ahead of the May 2027 exam period.
 
@@ -84,9 +90,12 @@ npm ci
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The current page is an honest
-introduction to a platform in development; it does not expose unpublished study
-content or link to features that have not been built.
+Open [http://localhost:3000](http://localhost:3000). The homepage links to public
+learning pages; these need the local database setup below. Empty catalogs display
+their publication state. Practice/exam entry pages explain that those engines are
+still in development. See [public learning](documentation/FEATURES/learning-content.md)
+for the format; [public learning pages](documentation/FEATURES/public-learning.md)
+describe routes, data flow, publication boundaries, and required deployment metadata.
 
 For a production build and local production server:
 
@@ -108,6 +117,7 @@ Prisma load the appropriate environment files; they must never be committed.
 | `NODE_ENV` | Validated as `development`, `test`, or `production`; Next.js sets it for its commands. An omitted value defaults to `development`. |
 | `TEST_DATABASE_URL` | Optional isolated test override. Only the documented local test role/database/port is accepted; ordinary `DATABASE_URL` is never a test fallback. |
 | `PG_BIN_DIR` | Optional absolute directory containing a complete PostgreSQL 18 `bin` toolset. Otherwise use the project-local portable cache or PATH. |
+| `SITE_URL` | Application HTTP(S) origin for learning-page canonical URLs. Set the actual origin before deployment; absent values omit canonicals. Never derive it from untrusted Host headers. |
 
 No `NEXT_PUBLIC_*` variables are needed. Do not put database URLs, tokens, admin
 credentials, or answer keys in public environment variables. Validation errors
@@ -124,7 +134,7 @@ list variable names rather than values. See [foundation boundaries](documentatio
 | `npm run build` | Compile the production application and check its server/client import boundaries. |
 | `npm run check` | Run lint, type checking, unit tests, and the production build in sequence. |
 | `npm run test:integration` | Apply committed migrations to the guarded local test database and run persistence/constraint/rollback tests. |
-| `npm run test:e2e` | Run Chromium desktop/mobile smoke tests against a dedicated server using only the guarded test database. |
+| `npm run test:e2e` | Build production assets and run Chromium desktop/mobile/tablet tests against a dedicated production server using only the guarded test database. |
 
 GitHub Actions runs these checks for every pull request and every push to `main`;
 see [CONTINUOUS_INTEGRATION.md](documentation/CONTINUOUS_INTEGRATION.md) for the
