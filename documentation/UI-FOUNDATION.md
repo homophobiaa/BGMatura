@@ -26,6 +26,13 @@ All keyboard-focusable elements inherit a 2px primary outline with 2px offset.
 The introduction uses these shared colours and spacing. Full controls and
 navigation remain separate features.
 
+## Motion
+
+Durations, easings, staggers, distances, and springs are tokens in `globals.css`
+with a typed copy in `src/lib/motion.ts`; scripts check reduced motion only through
+`src/lib/reduced-motion.ts`. The rules are in DESIGN.md section 10 and the tooling
+decision and measuring method in [MOTION.md](MOTION.md).
+
 Verification for #14: `npm run check` passed (lint, strict types, 53 unit tests,
 production build). Chromium checks against the production server at 320, 390,
 768, and 1280px found no horizontal overflow and confirmed the canvas/body
