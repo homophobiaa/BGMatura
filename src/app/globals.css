@@ -119,3 +119,11 @@ body {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+.learning-content, .study-text {
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}

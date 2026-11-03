@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Literata } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { SiteFooter } from "@/components/site-footer";
+import { SiteNavigation } from "@/components/site-navigation";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -25,7 +28,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="bg" className={`${inter.variable} ${literata.variable}`}>
-      <body>{children}</body>
+      <body className="flex min-h-screen flex-col">
+        <SiteNavigation />
+        <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-12 md:py-16">{children}</main>
+        <SiteFooter />
+      </body>
     </html>
   );
 }
