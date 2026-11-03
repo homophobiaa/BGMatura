@@ -103,10 +103,15 @@ function readRubric(record: QuestionRecord): RubricCriterion[] | undefined {
     return undefined;
   }
 
-  const parsed = rubricSchema.safeParse(record.rubric);
+  return parseRubric(record.rubric, record.id);
+}
+
+/** Validates a stored rubric (from a question or a snapshot) and returns typed criteria. */
+export function parseRubric(rubric: unknown, questionId: string): RubricCriterion[] {
+  const parsed = rubricSchema.safeParse(rubric);
 
   if (!parsed.success) {
-    throw new InvalidQuestionDefinitionError(`Question ${record.id} has a malformed rubric.`);
+    throw new InvalidQuestionDefinitionError(`Question ${questionId} has a malformed rubric.`);
   }
 
   // exactOptionalPropertyTypes forbids an explicit undefined, so omit absent points.

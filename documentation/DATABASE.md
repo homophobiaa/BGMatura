@@ -1,6 +1,6 @@
 # Database foundation
 
-This batch implements issues #9, #10, #12, #27, #28, #29, #62, and #63. The database is
+This batch implements issues #9, #10, #12, #27, #28, #29, #62, #63, and #68. The database is
 PostgreSQL 18, accessed only from server code through Prisma ORM 7.10 and its
 `pg` driver adapter. Prisma 8 prereleases are deliberately excluded. The
 application still has no admin content mutations or public learning routes.
@@ -191,7 +191,8 @@ turns a stored question with its options into the `QuestionDefinition` used by t
 graders. It refuses records that cannot be graded yet, such as a draft multiple-choice
 question without a correct option. The result contains answer keys and stays on the
 server; public projections are a separate task (#77). Topic, work, and source links
-(#63) and attempt snapshots (#68) are not part of this model yet.
+are described in the section on question associations below, and attempt snapshots in
+the section on question snapshots.
 
 Integration tests cover multiple-choice and ungraded written records end to end
 (store, map, grade) and assert the exact constraint behind each rejection.
@@ -236,6 +237,27 @@ question; and provenance is reduced to `origin` and `attribution`. Private edito
 fields are never selected, and an integration test checks that none of them can
 appear in the output. Admin editing of links and provenance, and requiring review
 before publication (#73), are separate issues.
+
+## Question snapshots
+
+`QuestionSnapshot` is an immutable copy of a published question as it was when an
+attempt began, so completed results never change with later edits, unpublishing, or
+deletion. Each row has the source `questionId`, a `formatVersion`, the `content` JSON,
+a SHA-256 `contentHash`, and `createdAt`; a snapshot is unique per question and hash,
+so an unchanged question is stored once and shared by its attempts.
+
+- A trigger rejects every `UPDATE`. Rows are inserted, and deleted only by retention
+  cleanup (#146).
+- There is **no foreign key** to `Question`, so editing, unpublishing, or deleting a
+  question can never alter or block a snapshot.
+- CHECK constraints require a SHA-256 hash, a JSON object, a declared format version
+  equal to the stored one, and a `definition.id` equal to `questionId`.
+- `content` contains answer keys and stays on the server; it holds only public
+  provenance, never editor names, source references, or review details.
+
+The format, its rationale, and how attempts use it are described in
+[question-snapshots.md](FEATURES/question-snapshots.md). Attempts will reference a
+snapshot when they are modeled (#78, #110).
 
 ## Isolated persistence and browser tests
 
