@@ -35,6 +35,48 @@ The status text sits under the option text, not beside it, so a long option keep
 width on a phone. Wording follows the fixed result labels in
 [DESIGN.md](../../.claude/DESIGN.md) section 2.
 
+## Written answers: `WrittenAnswer`
+
+```tsx
+<WrittenAnswer
+  question={publicQuestion}   // short-response, extended-response, or argumentative-writing
+  value={text}                // owned by the parent, exactly as typed
+  onChange={setText}
+  error={problemMessage}      // after an empty or too long submission
+  disabled={sending}
+/>
+```
+
+| Question type | Field | Limit |
+| --- | --- | --- |
+| Short response | One-line text input | 500 characters |
+| Extended response | Textarea, 6 rows | 3000 characters |
+| Argumentative writing | Textarea, 14 rows | 10000 characters |
+
+| Behaviour | How |
+| --- | --- |
+| Labelled | The prompt is the field's `label`. The field declares `lang="bg"` so spellchecking uses Bulgarian. |
+| Self-review explained | Extended and argumentative answers show, before writing, that the answer gets no automatic score and that guidance will follow. The public question does not say whether a question is self-review or ungraded, so the wording is true of both. A short response shows no such note. |
+| Text is never changed | No trimming or reformatting: line breaks, spacing, quotation marks, and Bulgarian letters are kept exactly as typed. The parent owns the text, so it survives moving between questions. |
+| Limits | `maxLength` comes from `WRITTEN_ANSWER_MAX_LENGTH`. A textarea shows `n от max знака`. Assistive technology hears about the limit only near it (the last 10%): "Остават N знака." and "Достигнат е лимитът от N знака." |
+| Empty or invalid submission | Pass a message in `error`. It is announced (`role="alert"`) and shown with an icon, the field gets a red border and `aria-invalid`, the message is linked with `aria-describedby`, and **focus moves to the field**. |
+| Locked while sending | `disabled` locks the field. |
+
+### Limits and validation are shared
+
+[`answer-limits.ts`](../../src/features/questions/answer-limits.ts) holds the limits and
+`findWrittenAnswerProblem(type, text)`, which returns `"empty"` (nothing but spaces or line
+breaks), `"too-long"`, or `null`. It has no server or browser dependencies, so the page uses
+it to decide when to show an error and the **server must run the same check** on every
+submitted answer, because a browser limit alone can be bypassed. Whether an empty answer is
+allowed depends on the page: practice asks the student to write something, while an exam may
+be submitted with unanswered questions.
+
+The limits are editorial defaults sized for the 2026 exam format (a rewritten paragraph in
+a short answer, a few sentences in an extended response, about four pages for the
+argumentative text). Revisit them when the 2027 specification is confirmed
+([EXAM_BLUEPRINT.md](../EXAM_BLUEPRINT.md)).
+
 ## Testing components
 
 Component tests are `*.test.tsx` files next to the component. They run in `npm test`
