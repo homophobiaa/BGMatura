@@ -312,4 +312,4 @@ are explicit commands, with their service/browser prerequisites documented here.
 
 Public pages additionally enforce published ancestry and safe stored blocks;
 see [public learning](FEATURES/public-learning.md). They reuse the lesson model
-and versioned content format from the existing #26/#30 branches.
+and versioned content format introduced in #26/#30.

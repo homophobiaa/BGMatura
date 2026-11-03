@@ -140,7 +140,8 @@ GitHub Actions runs these checks for every pull request and every push to `main`
 see [CONTINUOUS_INTEGRATION.md](documentation/CONTINUOUS_INTEGRATION.md) for the
 required check names, the isolated test database, and how secrets are protected.
 
-Unit tests live next to their owning feature/module as `*.test.ts`. Vitest uses
+Unit tests live next to their owning feature/module as `*.test.ts`; component tests are
+`*.test.tsx` and run in jsdom (see [answering-controls.md](documentation/FEATURES/answering-controls.md)). Vitest uses
 the same `@/*` source alias as the application. Environment tests cover invalid
 configuration and safe errors; assessment tests cover score bounds and the
 distinction between scored, ungraded, and self-review results. Type assertions

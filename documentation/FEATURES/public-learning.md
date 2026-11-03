@@ -1,10 +1,8 @@
 # Public learning pages
 
-This batch implements #16–20 and #44–53. It reuses the existing content-format
-and lesson-model work from #26/#30 (commits `78a3ac5` and `b007cb2`, by Radoslav
-Mitov), included as dependencies on this branch. Their assignments and original
-branches remain intact. Editorial CRUD/publishing remains separate work; this
-slice never seeds or publishes educational material.
+The public learning implementation covers #16–20 and #44–53, using the structured
+content format and lesson model from #26/#30. Editorial CRUD/publishing remains
+separate work; this slice never seeds or publishes educational material.
 
 ## Boundaries and data flow
 
