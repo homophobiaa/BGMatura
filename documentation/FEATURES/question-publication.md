@@ -44,7 +44,10 @@ are not machine scored (see [grading-service.md](grading-service.md)).
   `QuestionNotReadyToPublishError`, whose `problems` carry the same list. It runs in a
   transaction, and publishing an already published question changes nothing.
 - `publishQuestion` does **not** authorize the caller. Admin entry points must authorize
-  before calling it; #74 adds the authorized publish and unpublish operations around it.
+  before calling it. `question-status.ts` now provides the authorized serializable
+  publish/unpublish boundary used by `/api/admin/questions`, checks published topic
+  ancestry and linked works/authors, and preserves immutable snapshots. See
+  [editorial operations](editorial-operations.md).
 
 Publication is what makes a question visible: the public projections
 ([public-question-projections.md](public-question-projections.md)) and attempts select

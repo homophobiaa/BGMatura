@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { assertTestDatabaseUrl } from "./database-target.ts";
 import { getLocalDatabaseSettings, repositoryRoot } from "./local-database.ts";
+import { adminTestEnvironment } from "../tests/fixtures/admin-session.ts";
 
 async function run(): Promise<void> {
   const mode = process.argv[2];
@@ -12,7 +13,7 @@ async function run(): Promise<void> {
   const candidate = process.env.TEST_DATABASE_URL ?? (await getLocalDatabaseSettings("test")).connectionString;
   const databaseUrl = assertTestDatabaseUrl(candidate);
   const environment: NodeJS.ProcessEnv = {
-    ...process.env, NODE_ENV: "test", DATABASE_URL: databaseUrl,
+    ...process.env, ...adminTestEnvironment, NODE_ENV: "test", DATABASE_URL: databaseUrl,
     ...(mode === "browser" ? { SITE_URL: "http://127.0.0.1:3102" } : {}),
   };
 

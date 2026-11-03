@@ -13,8 +13,9 @@ author/work details, language topics, and structured lessons, all limited to
 published records. PostgreSQL/Prisma stores learning content and the shared
 question bank; server grading supports objective and explicitly ungraded written
 responses. Unit, database integration, and production browser tests cover these
-foundations. Editorial forms, practice sessions, exams, and authentication remain
-unfinished. No reviewed educational content is automatically seeded.
+foundations. Google admin authentication, protected previews, and authorized draft,
+publication, and safe deletion endpoints are implemented. Editorial forms, practice
+sessions, and exams remain unfinished. No reviewed educational content is automatically seeded.
 
 The planning target is a usable release ahead of the May 2027 exam period.
 
@@ -41,7 +42,7 @@ Practice and exams use a shared question bank and grading foundation. Objective 
 | Forms | React Hook Form where appropriate |
 | Server behavior | Server Components, Server Actions, and Route Handlers |
 
-One full-stack application owns the public experience and administration. Database access, authorization, and authoritative grading stay on the server. Managed hosting is selected as Vercel plus Neon PostgreSQL; see [HOSTING.md](documentation/HOSTING.md) for environment isolation, connection needs, cost assumptions, and release responsibility. No hosted resources have been provisioned by this decision. The admin authentication decision is recorded in [admin-authentication.md](documentation/FEATURES/admin-authentication.md); its implementation remains separate work.
+One full-stack application owns the public experience and administration. Database access, authorization, and authoritative grading stay on the server. Managed hosting is selected as Vercel plus Neon PostgreSQL; see [HOSTING.md](documentation/HOSTING.md) for environment isolation, connection needs, cost assumptions, and release responsibility. No hosted resources have been provisioned by this decision. See [admin authentication](documentation/FEATURES/admin-authentication.md) for Google setup and initial provisioning, and [editorial operations](documentation/FEATURES/editorial-operations.md) for server contracts and publication rules.
 
 ## Repository organization
 
@@ -118,6 +119,10 @@ Prisma load the appropriate environment files; they must never be committed.
 | `TEST_DATABASE_URL` | Optional isolated test override. Only the documented local test role/database/port is accepted; ordinary `DATABASE_URL` is never a test fallback. |
 | `PG_BIN_DIR` | Optional absolute directory containing a complete PostgreSQL 18 `bin` toolset. Otherwise use the project-local portable cache or PATH. |
 | `SITE_URL` | Application HTTP(S) origin for learning-page canonical URLs. Set the actual origin before deployment; absent values omit canonicals. Never derive it from untrusted Host headers. |
+| `BETTER_AUTH_URL` | Exact application origin; HTTPS outside loopback development. Google callback is `/api/auth/callback/google`. |
+| `BETTER_AUTH_SECRET` | Server-only random signing/encryption secret, at least 32 characters; different per environment. |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Server-only OAuth client credentials from Google Cloud Console. |
+| `ADMIN_EMAILS` | Comma-separated verified Google emails allowed to administer content. Checked on every admin request. |
 
 No `NEXT_PUBLIC_*` variables are needed. Do not put database URLs, tokens, admin
 credentials, or answer keys in public environment variables. Validation errors
