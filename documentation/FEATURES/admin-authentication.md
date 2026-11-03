@@ -1,6 +1,6 @@
 # Admin authentication
 
-> Decision record for issue #3. Implementation follows in #21 (login and logout) and #23 (reusable server-side admin authorization).
+> Decision record for #3; implementation in #21–23. Better Auth 1.7.15 with its Prisma adapter.
 
 ## Scope
 
@@ -64,7 +64,7 @@ Adding an admin means adding their email and redeploying. Removing one means rem
 | Expiry | Session expires after **12 hours without activity**; it is extended at most once per hour while the admin is active. Configured with Better Auth `session.expiresIn = 12h` and `session.updateAge = 1h`. |
 | Logout | „Изход“ in the admin header calls Better Auth sign-out, which deletes the session row and clears the cookie. Signing out of Google is not required. |
 | Expired or missing session | Admin pages redirect to the sign-in page; admin Server Actions and Route Handlers return an authorization error and change nothing. |
-| CSRF | Better Auth's built-in origin checks on its endpoints; our Server Actions rely on Next.js's same-origin checks. |
+| CSRF | Better Auth's built-in origin checks on its endpoints; editorial POST services also require the exact configured `Origin`. Missing or cross-origin requests fail before mutation. |
 
 ## Environment variables
 
@@ -78,7 +78,38 @@ Names only. Real values live in the hosting provider's secret settings and a loc
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret. |
 | `ADMIN_EMAILS` | Comma-separated Google account emails allowed to administer the site. |
 
-These names go into `.env.example` and the environment validation added in #8.
+These names are in `.env.example`. Authentication initializes lazily on admin
+requests; `src/features/admin/server/environment.ts` validates its configuration
+without exposing supplied values. Public builds/pages need no Google credentials.
+Apply `npm run db:deploy` before signing in to create the four `Admin*` tables.
+
+## Implementation and verification
+
+- `/admin/sign-in` has the labeled Google control; `/admin` checks the session and
+  offers sign-out. `/api/auth/[...all]` delegates to Better Auth. The Google provider
+  validates the verified allowlisted profile; the user-create hook checks again.
+  The account-create hook permits Google only. Password authentication and account
+  linking are disabled. No test plugin exists in the production auth factory.
+- `src/features/admin/server/authorization.ts` reloads the database session with
+  cookie caching disabled and rechecks the current allowlist on every request.
+  Editorial services call it themselves, including direct internal calls. Mutations
+  require the configured origin even after the page has authorized an editor.
+- Cookies are signed, HttpOnly, SameSite=Lax and Secure for HTTPS. The URL validator
+  permits plain HTTP only on loopback. OAuth account tokens are encrypted at rest;
+  profile images are discarded. Better Auth's in-memory rate limiter is enabled
+  (60 requests/minute per process); it is not a distributed abuse quota.
+- Admin responses and previews use private/no-store and noindex headers. Preview
+  pages also include noindex metadata. Errors never return credentials or raw
+  database/provider exceptions. Missing configuration fails closed.
+- The isolated integration/browser runners inject clearly synthetic credentials
+  only into their child processes. Test-only Better Auth helpers create real signed
+  cookies and database sessions. Tests exercise production authorization, expiry,
+  revocation, allowlist removal, secure-cookie attributes, disabled signup, OAuth
+  provisioning hooks and rollback, and the browser sign-out control.
+- A real Google consent/callback round trip requires the environment's OAuth client
+  and approved account. After provisioning, verify first sign-in at `/admin`, sign
+  out, and verify rejection with an unlisted Google account. Automated tests do not
+  claim to have contacted Google or provisioned a hosted OAuth client.
 
 ## Not decided here
 
