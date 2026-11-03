@@ -8,7 +8,7 @@ BG Matura brings study material, interactive practice, timed exam simulations, a
 
 ## Project status
 
-The application foundation now runs: a Bulgarian introductory page, strict TypeScript/lint checks, server environment validation, and typed question/evaluation contracts. The server has Prisma/PostgreSQL persistence for authors and topic hierarchies, with unit, database integration, and desktop/mobile browser smoke tests. The capabilities below describe the planned MVP, not completed features. Public learning pages, editorial forms, practice, exams, and authentication are not implemented yet.
+The application foundation now runs: a Bulgarian introductory page, strict TypeScript/lint checks, server environment validation, and typed question/evaluation contracts. The server has Prisma/PostgreSQL persistence for authors, works, topics, lessons, and question definitions, with unit, database integration, and desktop/mobile browser smoke tests. Lessons use the [validated structured content format](documentation/FEATURES/learning-content.md). The capabilities below describe the planned MVP, not completed features. Public learning pages, editorial forms, practice, exams, and authentication are not implemented yet.
 
 The planning target is a usable release ahead of the May 2027 exam period.
 

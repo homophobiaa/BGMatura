@@ -79,6 +79,23 @@ Components. Future admin entry points must authorize every write before calling
 feature services. These model/query helpers are not public Server Actions or
 Route Handlers and do not provide an unauthenticated editing API.
 
+## Language lessons
+
+`Lesson` (#30) stores a title, globally unique slug, required primary `topicId`,
+versioned JSON `content`, draft/published status, and creation/edit timestamps.
+The primary topic may be a subtopic and can have multiple lessons. A composite
+foreign key plus language-only CHECK requires a Bulgarian-language topic and
+refuses deleting it while referenced; lessons cannot become orphaned. Additional
+cross-topic tagging is not introduced without an implemented need.
+
+Documents follow [learning-content.md](FEATURES/learning-content.md). Empty v1
+documents are allowed in drafts. PostgreSQL checks the v1 object/array envelope
+and refuses an empty published document; server writes must validate every block
+with `learningContentSchema`. Full publication/editorial rules remain #40.
+`findPublishedLessonBySlug` selects reading fields only, requires both lesson and
+topic to be published, and parses stored JSON again; malformed content resolves
+to `null`. No admin write API or public lesson route is exposed by this model.
+
 ## Authors
 
 `Author` has a UUID identity, unique nonblank slug, nonblank name, optional
