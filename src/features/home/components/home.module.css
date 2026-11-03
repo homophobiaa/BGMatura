@@ -37,6 +37,10 @@
 .order1 { --order: 1; }
 .order2 { --order: 2; }
 
+.scrollCue {
+  display: none;
+}
+
 .card {
   --order: 1;
   max-width: 40rem;
@@ -357,6 +361,47 @@
      */
     .scene:not(.sceneTitle) .stage { content-visibility: auto; }
 
+    /*
+     * The scroll cue sits at the bottom of the viewport (the title stage starts below the header,
+     * so its own bottom is off screen) and fades out over the first stretch of the pinned scene.
+     * It lives outside the stage: the stage's scroll animation makes it the containing block for
+     * fixed descendants, which would pin the cue to the stage instead of the viewport.
+     * The chevron nudges three times on arrival: under five seconds, so no pause control needed.
+     * On short screens the text already runs past the fold, which says "scroll" by itself.
+     */
+    .scrollCue {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      translate: -50% 0;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 2.75rem;
+      min-width: 2.75rem;
+      padding: 0.25rem 1rem;
+      border-radius: 9999px;
+      background: color-mix(in srgb, var(--canvas) 92%, transparent);
+      color: var(--ink);
+      font-size: var(--text-label);
+      text-decoration: none;
+      pointer-events: auto;
+      animation: cue-out linear forwards;
+      animation-timeline: --scene;
+      animation-range: contain 0% contain 15%;
+    }
+
+    .scrollCue svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: var(--primary);
+      animation: cue-nudge 1.2s var(--ease-standard) 1s 3 both;
+    }
+
+    @media (max-height: 40rem) {
+      .scrollCue { display: none; }
+    }
+
     /* The title scene is already on screen when the page opens, and the last scene hands over to the
        ordinary page below it, so neither holds at that end. */
     .sceneTitle .stage {
@@ -580,6 +625,14 @@
 @keyframes book-unveil {
   from { content-visibility: visible; opacity: 0; }
   to { content-visibility: visible; opacity: 1; }
+}
+
+@keyframes cue-out {
+  to { opacity: 0; pointer-events: none; }
+}
+
+@keyframes cue-nudge {
+  50% { translate: 0 var(--motion-distance-sm); }
 }
 
 @keyframes fade-in {

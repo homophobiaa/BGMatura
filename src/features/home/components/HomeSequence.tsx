@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -26,13 +26,23 @@ function PrimaryAction() {
   return <Button asChild><Link href="/uchi">Избери какво да учиш <ArrowRight aria-hidden="true" /></Link></Button>;
 }
 
-function Scene({ className, labelledBy, children, art }: { className: string | undefined; labelledBy: string; children: ReactNode; art: ReactNode }) {
+function Scene({ className, labelledBy, children, art, after }: { className: string | undefined; labelledBy: string; children: ReactNode; art: ReactNode; after?: ReactNode }) {
   return <section aria-labelledby={labelledBy} className={cn(styles.scene, className)}>
     <div className={styles.stage}>
       <div className={styles.copy}>{children}</div>
       <div className={styles.art}>{art}</div>
     </div>
+    {after}
   </section>;
+}
+
+/**
+ * Pinned, the title scene fills the screen and gives no sign that there is more below. This link
+ * says so and leads there; it fades out as soon as the reader scrolls. The static page needs no
+ * cue, because the next section is already in view.
+ */
+function ScrollCue() {
+  return <a href="#literatura" className={styles.scrollCue}>Превърти надолу <ChevronDown aria-hidden="true" /></a>;
 }
 
 /** Position in a scene's reveal sequence: earlier items arrive first. */
@@ -51,7 +61,7 @@ function PathCard({ id, href, title, text, later = false }: { id: string; href: 
 
 export function HomeSequence() {
   return <div className={styles.sequence}>
-    <Scene className={styles.sceneTitle} labelledBy="home-title" art={<BookArt />}>
+    <Scene className={styles.sceneTitle} labelledBy="home-title" art={<BookArt />} after={<ScrollCue />}>
       <p className={cn(styles.leave, "text-caption text-muted")}>Подготовка за ДЗИ по БЕЛ · 12. клас</p>
       <h1 id="home-title" className="text-display-xl">
         <span className={cn(styles.titleLine, styles.splitLeft)}>Учи с разбиране.</span>{" "}

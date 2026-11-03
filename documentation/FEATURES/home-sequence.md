@@ -16,7 +16,7 @@
 
 | # | Scene | While it holds (pinned) | Hand-over to the next scene |
 | --- | --- | --- | --- |
-| 1 | Title, introduction, primary action, links to every scene | A book's cover turns open, its pages are written, a ribbon drops. | The title splits into its two lines and drifts apart; scrolling back reassembles it. |
+| 1 | Title, introduction, primary action, links to every scene, and a "Превърти надолу" cue fixed to the bottom of the screen (a link to the first path; it fades out as soon as the reader scrolls, and is left out on screens under 40rem tall, where the text already runs past the fold) | A book's cover turns open, its pages are written, a ribbon drops. | The title splits into its two lines and drifts apart; scrolling back reassembles it. |
 | 2 | Учи: Литература, then Български език | „ and Ъ settle on the two pages, lines are written, a page turns. | Cards rise in one after another as the scene arrives. |
 | 3 | Тестове | The selection hesitates between three options and settles with a check. | — |
 | 4 | Пробна матура | A clock hand sweeps once around the face. | — |

@@ -45,6 +45,11 @@ describe("HomeSequence content", () => {
     }
   });
 
+  it("tells the reader there is more below and links to the first learning path", () => {
+    const cue = Array.from(document.querySelectorAll("a")).find((link) => link.textContent?.startsWith("Превърти надолу"));
+    expect(cue?.getAttribute("href")).toBe("#literatura");
+  });
+
   it("states free access without registration and shows no statistics", () => {
     const text = document.body.textContent ?? "";
     expect(text).toContain("Започни безплатно, без регистрация.");
