@@ -22,9 +22,21 @@ Signing in is optional. Learning, practice and mock exams work without an accoun
 - `GET /api/account/attempts?cursor=` serves the pages. The account id comes only from the verified session; a cursor cannot widen it.
 - An attempt linked to an account opens through the account from any device, without the browser token, and does not expire with the 30-day token (`AttemptAccess.userId`, set only by server code). Writes still need the token.
 
+## Save-progress prompt
+
+`SaveProgressPrompt` (`src/features/account/components/save-progress-prompt.tsx`) goes under a finished result: `<SaveProgressPrompt attemptId={id} returnTo={pathOfThisResult} />`.
+
+- A visitor sees a calm section "Запази прогреса": the result stays in this browser without an account, signing in with Google also keeps it across devices, and only the name and email from Google are kept. "Влез и запази" goes to `/vhod?next=<this result>`; "Не сега" hides it for the browser session (`sessionStorage`, no cookie).
+- It is not a dialog: it never covers the result, takes focus, animates, or comes back after dismissal.
+- A signed-in student never sees it. Instead the finished attempt is claimed for their account, which also completes the flow when the student returns from signing in on this result page.
+- If sign-in is unavailable or the network fails it shows nothing; the result never depends on it.
+
+Mounting it needs a result screen, which is not built yet; whoever builds the result page adds the one line above.
+
 ## Tests
 
 - `src/features/account/return-path.test.ts` — the return-path rules.
+- `src/features/account/components/save-progress-prompt.test.tsx` — visitor, dismissal, signed-in claim, failures, blocked storage.
 - `tests/integration/student-history.test.ts` — paging, isolation between students, access from another device.
 - `tests/browser/student-sign-in.spec.ts` — the page, the registration redirect, the header link, and a signed-in student signing out (desktop, tablet, phone).
 
