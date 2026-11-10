@@ -62,7 +62,8 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
 
       <section aria-labelledby="data" className="space-y-3">
         <h2 id="data" className="text-title">Какво пазим</h2>
-        <p>Само името и потвърдения имейл от Google. Не пазим парола и снимка.</p>
+        <p>Само името и потвърдения имейл от Google. Не пазим парола и снимка. Прочети <Link href="/poveritelnost" className="text-primary underline underline-offset-4">известието за поверителност</Link>; профилът се изтрива по всяко време.</p>
+        <p>Профил могат да правят ученици на 14 или повече години. Под 14 години използвай сайта без профил.</p>
       </section>
     </article>
   );

@@ -6,7 +6,7 @@
 
 - Administrators sign in to edit content. Students may **optionally** sign in to keep their results (decided in #193, `.claude/PROJECT_DIRECTION.md` §4.8). Learning, practice, and exams never require an account.
 - There are two roles, **admin** and **student**. No role hierarchy or editorial approval workflow (§4.7, "Not required"). The role is **derived from the allowlist on every request** (see below). It is never stored and never taken from the browser.
-- Student data is minimal: the name and verified email from Google only, no profile image, no passwords. Account and data deletion, retention, the privacy notice, and the approach to minors are #198.
+- Student data is minimal: the name and verified email from Google only, no profile image, no passwords. Account and data deletion, retention, the privacy notice, and the approach to minors are in [student-privacy.md](student-privacy.md).
 - Expected number of admins: a handful of known people.
 
 ## Decision

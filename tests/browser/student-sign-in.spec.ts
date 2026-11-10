@@ -64,3 +64,39 @@ test("a signed-in student sees their name and can sign out from the header", asy
     await student.cleanup();
   }
 });
+
+test("the privacy notice is linked from the footer and the sign-in page", async ({ page }) => {
+  await page.goto("/vhod");
+  await expect(page.getByRole("link", { name: "известието за поверителност" })).toBeVisible();
+  await page.getByRole("contentinfo").getByRole("link", { name: "Поверителност" }).click();
+  await expect(page).toHaveURL(/\/poveritelnost$/);
+  await expect(page.getByRole("heading", { name: "Поверителност", level: 1 })).toBeVisible();
+  await expect(page.getByText("Профил могат да правят ученици на 14 или повече години")).toBeVisible();
+});
+
+test("the profile page needs sign-in, and a student can delete the profile after confirming", async ({ page, context }, info) => {
+  await page.goto("/profil");
+  await expect(page).toHaveURL(/\/vhod\?next=\/profil$/);
+
+  const student = await createTestStudent(database, `student-${info.project.name}-${randomUUID()}@example.test`);
+  try {
+    await context.addCookies(student.cookies);
+    await page.goto("/profil");
+    await expect(page.getByRole("heading", { name: "Моят профил", level: 1 })).toBeVisible();
+
+    await page.getByRole("button", { name: "Изтрий профила и данните ми" }).click();
+    await expect(page.getByText("Сигурен ли си?")).toBeVisible();
+    await page.getByRole("button", { name: "Отказ" }).click();
+    await expect(page.getByText("Сигурен ли си?")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Изтрий профила и данните ми" }).click();
+    await page.getByRole("button", { name: "Да, изтрий всичко" }).click();
+    await expect(page).toHaveURL(/\/\?profil=izbrisan$/);
+    expect(await database.user.count({ where: { id: student.user.id } })).toBe(0);
+
+    await page.goto("/profil");
+    await expect(page).toHaveURL(/\/vhod\?next=\/profil$/);
+  } finally {
+    await student.cleanup().catch(() => undefined);
+  }
+});
