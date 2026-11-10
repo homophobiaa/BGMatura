@@ -140,3 +140,16 @@ export function finishAttempt(access: AttemptAccess, database?: PrismaClient) {
   return withOwnedAttempt(access, async (transaction, attempt, now) =>
     projectAttempt(await finalizeLocked(transaction, attempt, now), now), database);
 }
+
+/**
+ * Links the attempt to a signed-in student. The caller must hold the attempt's own token, so only the browser that
+ * started it can claim it. Claiming is idempotent for the same student. An attempt already linked to another account
+ * is reported as not found, which tells the second account nothing about the first. The token keeps working.
+ */
+export function claimAttempt(access: AttemptAccess, userId: string, database?: PrismaClient) {
+  return withOwnedAttempt(access, async (transaction, attempt) => {
+    if (attempt.userId !== null && attempt.userId !== userId) throw new AttemptError("not-found");
+    if (attempt.userId === null) await transaction.attempt.update({ where: { id: attempt.id }, data: { userId } });
+    return { id: attempt.id, claimed: true as const };
+  }, database);
+}
