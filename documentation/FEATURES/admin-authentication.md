@@ -4,8 +4,9 @@
 
 ## Scope
 
-- Only administrators sign in. Students never sign in (`.claude/PROJECT_DIRECTION.md` §4.7, §6).
-- There is a single role: **admin**. No role hierarchy or editorial approval workflow (§4.7, "Not required").
+- Today only administrators sign in. Students may **optionally** sign in in the future to keep their results; this was decided in #193 (`.claude/PROJECT_DIRECTION.md` §4.8) and is built in #194 to #199. Until #194 lands, nothing below changes.
+- There is a single **admin** role. No role hierarchy or editorial approval workflow (§4.7, "Not required"). #194 adds a separate **student** role to the same Google sign-in; administrators remain limited to the allowlist, and a student account can never reach the admin area.
+- Planned for the student role (decided in #193, details in #194 and #198): only the name and verified email from Google are kept, no profile image and no passwords; students can delete their account and data; the approach to minors and the legal or privacy review needed before release are recorded in #193 and #198.
 - Expected number of admins: a handful of known people.
 
 ## Decision
