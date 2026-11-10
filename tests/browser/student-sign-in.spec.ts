@@ -7,10 +7,17 @@ import { createTestStudent } from "../fixtures/admin-session";
 
 const database = new PrismaClient({ adapter: new PrismaPg({ connectionString: assertTestDatabaseUrl(process.env.DATABASE_URL ?? "") }) });
 
-/** On a phone the account controls sit inside the menu, which is closed until the button is pressed. */
+/**
+ * On a phone the account controls sit inside the menu, which is closed until the button is pressed. The press is
+ * repeated until the menu is open, because a press before the page has hydrated does nothing.
+ */
 async function openMenuIfCollapsed(page: Page) {
   const menu = page.getByRole("button", { name: "Меню" });
-  if (await menu.isVisible()) await menu.click();
+  if (!(await menu.isVisible())) return;
+  await expect(async () => {
+    if ((await menu.getAttribute("aria-expanded")) !== "true") await menu.click();
+    await expect(menu).toHaveAttribute("aria-expanded", "true", { timeout: 1000 });
+  }).toPass({ timeout: 15_000 });
 }
 
 test.afterAll(async () => { await database.$disconnect(); });
@@ -48,8 +55,11 @@ test("a signed-in student sees their name and can sign out from the header", asy
     await expect(page.getByRole("link", { name: "Администрация" })).toHaveCount(0);
 
     await signOut.click();
-    await openMenuIfCollapsed(page);
-    await expect(page.getByRole("link", { name: "Вход", exact: true }).first()).toBeVisible();
+    // Signing out reloads the page, which closes the phone menu, so the menu is opened again on the new page.
+    await expect(async () => {
+      await openMenuIfCollapsed(page);
+      await expect(page.getByRole("link", { name: "Вход", exact: true }).first()).toBeVisible({ timeout: 1000 });
+    }).toPass({ timeout: 15_000 });
   } finally {
     await student.cleanup();
   }
