@@ -44,7 +44,7 @@ Practice and exams use a shared question bank and grading foundation. Objective 
 | Forms | React Hook Form where appropriate |
 | Server behavior | Server Components, Server Actions, and Route Handlers |
 
-One full-stack application owns the public experience and administration. Database access, authorization, and authoritative grading stay on the server. Managed hosting is selected as Vercel plus Neon PostgreSQL; see [HOSTING.md](documentation/HOSTING.md) for environment isolation, connection needs, cost assumptions, and release responsibility. No hosted resources have been provisioned by this decision. See [admin authentication](documentation/FEATURES/admin-authentication.md) for Google setup and initial provisioning, and [editorial operations](documentation/FEATURES/editorial-operations.md) for server contracts and publication rules.
+One full-stack application owns the public experience and administration. Database access, authorization, and authoritative grading stay on the server. Managed hosting is selected as Vercel plus Neon PostgreSQL; see [HOSTING.md](documentation/HOSTING.md) for environment isolation, connection needs, cost assumptions, and release responsibility. No hosted resources have been provisioned by this decision. See [admin authentication](documentation/FEATURES/admin-authentication.md) for Google setup and initial provisioning, [editorial operations](documentation/FEATURES/editorial-operations.md) for server contracts and publication rules, and [admin editors](documentation/FEATURES/admin-editors.md) for the editor pages at `/admin`, and [practice](documentation/FEATURES/practice.md) for the student practice pages at `/testove`.
 
 ## Repository organization
 

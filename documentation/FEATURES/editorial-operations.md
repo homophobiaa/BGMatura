@@ -1,7 +1,8 @@
 # Authorized editorial operations
 
 This backend slice implements #31, #33, #35, #37, #40–42, #54–55, #58, #69,
-and #74. Forms remain separate frontend tasks. Student access remains anonymous.
+and #74. The learning editor pages are described in [admin-editors.md](admin-editors.md).
+Student access remains anonymous.
 
 ## Follow the request
 

@@ -2,10 +2,11 @@ import "server-only";
 import { z } from "zod";
 import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { learningContentSchema } from "../content";
+import { learningKinds } from "../kinds";
 import { EditorialError, editorialId, editorialMutation, parseEditorialInput } from "@/server/editorial";
 
-export const learningKindSchema = z.enum(["author", "work", "topic", "lesson"]);
-export type LearningKind = z.infer<typeof learningKindSchema>;
+export const learningKindSchema = z.enum(learningKinds);
+export type { LearningKind } from "../kinds";
 const publicationSchema = z.strictObject({ kind: learningKindSchema, id: editorialId, publish: z.boolean() });
 export type FieldProblems = Record<string, string[]>;
 

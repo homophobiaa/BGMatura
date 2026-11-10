@@ -10,7 +10,8 @@ export const adminTestEnvironment = {
   BETTER_AUTH_URL: "http://127.0.0.1:3102",
   GOOGLE_CLIENT_ID: "test-client.apps.googleusercontent.com",
   GOOGLE_CLIENT_SECRET: "test-only-not-a-google-credential",
-  ADMIN_EMAILS: "admin@example.test,desktop-chromium@example.test,mobile-chromium@example.test,tablet-chromium@example.test",
+  ADMIN_EMAILS: "admin@example.test,desktop-chromium@example.test,mobile-chromium@example.test,tablet-chromium@example.test," +
+    "editor-desktop-chromium@example.test,editor-mobile-chromium@example.test,editor-tablet-chromium@example.test",
 };
 
 /** Mint real Better Auth database sessions and signed cookies without contacting Google. */
