@@ -49,7 +49,7 @@ export function SiteNavigation() {
     const linkClass = "inline-flex min-h-11 items-center rounded-md px-3 py-3 text-label text-ink hover:bg-surface-soft";
     if (account === null) return <Link href="/vhod" className={linkClass} onClick={() => setOpenPath(null)}>Вход</Link>;
     return <>
-      <span className="inline-flex min-h-11 items-center px-3 text-label text-ink-muted">{account.name}</span>
+      <Link href="/profil" className={linkClass} onClick={() => setOpenPath(null)}>{account.name}</Link>
       {account.role === "admin" ? <Link href="/admin" className={linkClass} onClick={() => setOpenPath(null)}>Администрация</Link> : null}
       <button type="button" className={linkClass} onClick={() => { void signOut(); }}>Изход</button>
     </>;
