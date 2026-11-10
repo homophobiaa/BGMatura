@@ -4,14 +4,14 @@ import Link from "next/link";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Feedback } from "@/components/ui/feedback";
-import { publicationStatusLabels } from "../learning-kind-labels";
-import type { LearningEditorState } from "./use-learning-editor";
+import { editorialPreviewPath, publicationStatusLabels } from "../learning-kind-labels";
+import type { EditorialEditorState } from "./use-editorial-editor";
 
 /**
  * Shared shell for every learning editor: status, feedback, the form fields,
  * save, and the explicit preview/publish/unpublish controls.
  */
-export function EditorFrame({ editor, label, onSubmit, children }: { editor: LearningEditorState; label: string; onSubmit: () => void; children: ReactNode }) {
+export function EditorFrame({ editor, label, onSubmit, children }: { editor: EditorialEditorState; label: string; onSubmit: () => void; children: ReactNode }) {
   const published = editor.status === "PUBLISHED";
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -34,10 +34,10 @@ export function EditorFrame({ editor, label, onSubmit, children }: { editor: Lea
   </div>;
 }
 
-function PublicationControls({ editor }: { editor: LearningEditorState }) {
+function PublicationControls({ editor }: { editor: EditorialEditorState }) {
   const [confirmingUnpublish, setConfirmingUnpublish] = useState(false);
   if (!editor.id) return null;
-  const previewHref = `/admin/preview/${editor.kind}/${editor.id}`;
+  const previewHref = editorialPreviewPath(editor.kind, editor.id);
 
   return <section aria-labelledby="publication-heading" className="space-y-4 rounded-lg bg-surface-soft p-4 md:p-6">
     <h2 id="publication-heading" className="text-title">Публикуване</h2>

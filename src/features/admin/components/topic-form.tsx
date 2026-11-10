@@ -5,7 +5,7 @@ import { fieldMessages } from "../editorial-messages";
 import { EditorFrame } from "./editor-frame";
 import { SelectField, TextField } from "./form-fields";
 import { SlugField } from "./slug-field";
-import { useLearningEditor } from "./use-learning-editor";
+import { useEditorialEditor } from "./use-editorial-editor";
 
 type Subject = "BULGARIAN_LANGUAGE" | "LITERATURE";
 export type TopicFormRecord = { id: string; title: string; slug: string; subject: Subject; parentId: string | null; position: number; status: "DRAFT" | "PUBLISHED"; updatedAt: string };
@@ -25,7 +25,7 @@ function descendantsOf(topicId: string, topics: readonly TopicChoice[]): Set<str
 }
 
 export function TopicForm({ record, topics }: { record?: TopicFormRecord | undefined; topics: TopicChoice[] }) {
-  const editor = useLearningEditor("topic", record ?? {});
+  const editor = useEditorialEditor("topic", record ?? {});
   const [title, setTitle] = useState(record?.title ?? "");
   const [slug, setSlug] = useState(record?.slug ?? "");
   const [subject, setSubject] = useState<Subject>(record?.subject ?? "BULGARIAN_LANGUAGE");

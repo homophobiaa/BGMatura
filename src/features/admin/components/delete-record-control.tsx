@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Feedback } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/input";
 import type { LearningKind } from "@/features/learning/kinds";
-import { sendLearningCommand } from "./editorial-request";
+import { sendEditorialCommand } from "./editorial-request";
 
 const deletedSchema = z.object({ id: z.uuid(), slug: z.string(), deleted: z.literal(true) });
 
@@ -31,7 +31,7 @@ export function DeleteRecordControl({ kind, id, slug, title, editHref, afterDele
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
-    const result = await sendLearningCommand(kind, { operation: "delete", id, confirmation }, deletedSchema);
+    const result = await sendEditorialCommand(kind, { operation: "delete", id, confirmation }, deletedSchema);
     if (result.ok) {
       router.replace(afterDeleteHref);
       router.refresh();

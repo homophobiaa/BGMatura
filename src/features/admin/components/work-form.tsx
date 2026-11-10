@@ -6,7 +6,7 @@ import { listItemsFromText } from "../lesson-blocks";
 import { EditorFrame } from "./editor-frame";
 import { SelectField, TextAreaField, TextField } from "./form-fields";
 import { SlugField } from "./slug-field";
-import { useLearningEditor } from "./use-learning-editor";
+import { useEditorialEditor } from "./use-editorial-editor";
 
 export type WorkFormRecord = {
   id: string; title: string; slug: string; authorId: string; genre: string | null; summary: string | null;
@@ -17,7 +17,7 @@ export type WorkFormRecord = {
 const nullable = (value: string) => value.trim() ? value : null;
 
 export function WorkForm({ record, authors }: { record?: WorkFormRecord | undefined; authors: { id: string; name: string; status: "DRAFT" | "PUBLISHED" }[] }) {
-  const editor = useLearningEditor("work", record ?? {});
+  const editor = useEditorialEditor("work", record ?? {});
   const [title, setTitle] = useState(record?.title ?? "");
   const [slug, setSlug] = useState(record?.slug ?? "");
   const [authorId, setAuthorId] = useState(record?.authorId ?? "");

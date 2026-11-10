@@ -8,9 +8,10 @@ import { learningKindLabels, learningListPath } from "../learning-kind-labels";
 const destinations = [
   { href: "/admin", label: "Начало" },
   ...learningKinds.map((kind) => ({ href: learningListPath(kind), label: learningKindLabels[kind].plural })),
+  { href: "/admin/questions", label: "Въпроси" },
 ];
 
-/** Editorial navigation. Question and exam areas are added here once their editors exist. */
+/** Editorial navigation. The exam area is added here once its editor exists. */
 export function AdminNavigation() {
   const pathname = usePathname();
   return <nav aria-label="Администрация" className="flex flex-wrap gap-2">

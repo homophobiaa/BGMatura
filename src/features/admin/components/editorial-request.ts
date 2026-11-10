@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { LearningKind } from "@/features/learning/kinds";
 import { translateEditorialMessage } from "../editorial-messages";
+import { editorialEndpoint, type EditorialKind } from "../learning-kind-labels";
 
 /** Client side of the editorial API: one place that sends commands and reads the typed response. */
 export type EditorialFailure = { ok: false; error: string; message: string; fields: Record<string, string[]> };
@@ -19,7 +19,6 @@ const failureSchema = z.object({
 
 export const savedRecordSchema = z.object({
   id: z.uuid(),
-  slug: z.string(),
   status: z.enum(["DRAFT", "PUBLISHED"]),
   updatedAt: z.string(),
 });
@@ -27,10 +26,10 @@ export type SavedRecord = z.infer<typeof savedRecordSchema>;
 
 const networkFailure: EditorialFailure = { ok: false, error: "network", message: "Няма връзка със сървъра. Провери интернета и опитай отново.", fields: {} };
 
-export async function sendLearningCommand<T>(kind: LearningKind, command: LearningCommand, recordSchema: z.ZodType<T>): Promise<EditorialResult<T>> {
+export async function sendEditorialCommand<T>(kind: EditorialKind, command: LearningCommand, recordSchema: z.ZodType<T>): Promise<EditorialResult<T>> {
   let response: Response;
   try {
-    response = await fetch(`/api/admin/learning/${kind}`, {
+    response = await fetch(editorialEndpoint(kind), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(command),

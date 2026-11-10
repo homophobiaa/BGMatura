@@ -2,14 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import type { LearningKind } from "@/features/learning/kinds";
-import { learningEditPath } from "../learning-kind-labels";
-import { savedRecordSchema, sendLearningCommand, type SavedRecord } from "./editorial-request";
+import { editorialEditPath, type EditorialKind } from "../learning-kind-labels";
+import { savedRecordSchema, sendEditorialCommand, type SavedRecord } from "./editorial-request";
 
 export type EditorFeedback = { tone: "success" | "error" | "warning"; text: string };
 
-export type LearningEditorState = {
-  kind: LearningKind;
+export type EditorialEditorState = {
+  kind: EditorialKind;
   id: string | undefined;
   status: SavedRecord["status"];
   busy: boolean;
@@ -26,7 +25,7 @@ export type LearningEditorState = {
  * sends commands, keeps the last saved version for conflict checks, and blocks a
  * second command while one is still running.
  */
-export function useLearningEditor(kind: LearningKind, initial: { id?: string; status?: SavedRecord["status"]; updatedAt?: string }): LearningEditorState {
+export function useEditorialEditor(kind: EditorialKind, initial: { id?: string; status?: SavedRecord["status"]; updatedAt?: string }): EditorialEditorState {
   const router = useRouter();
   const [status, setStatus] = useState(initial.status ?? "DRAFT");
   const [updatedAt, setUpdatedAt] = useState(initial.updatedAt);
@@ -51,7 +50,7 @@ export function useLearningEditor(kind: LearningKind, initial: { id?: string; st
 
   async function save(draft: Record<string, unknown>) {
     await run(async () => {
-      const result = await sendLearningCommand(kind, {
+      const result = await sendEditorialCommand(kind, {
         operation: "save",
         draft: id ? { ...draft, id, expectedUpdatedAt: updatedAt } : draft,
       }, savedRecordSchema);
@@ -63,7 +62,7 @@ export function useLearningEditor(kind: LearningKind, initial: { id?: string; st
       setFields({});
       if (!id) {
         // Stay busy while the browser moves to the new record's edit page.
-        router.replace(`${learningEditPath(kind, result.record.id)}?created=1`);
+        router.replace(`${editorialEditPath(kind, result.record.id)}?created=1`);
         return true;
       }
       setUpdatedAt(result.record.updatedAt);
@@ -77,7 +76,7 @@ export function useLearningEditor(kind: LearningKind, initial: { id?: string; st
   async function setPublication(publish: boolean) {
     if (!id) return;
     await run(async () => {
-      const result = await sendLearningCommand(kind, { operation: publish ? "publish" : "unpublish", id }, savedRecordSchema);
+      const result = await sendEditorialCommand(kind, { operation: publish ? "publish" : "unpublish", id }, savedRecordSchema);
       if (!result.ok) {
         setFeedback({ tone: "error", text: result.message });
         setFields(result.fields);

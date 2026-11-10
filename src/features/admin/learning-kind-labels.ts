@@ -17,3 +17,18 @@ export function learningListPath(kind: LearningKind) {
 export function learningEditPath(kind: LearningKind, id: string) {
   return `/admin/learning/${kind}/${id}`;
 }
+
+/** Everything an editor page can save: learning records and bank questions. */
+export type EditorialKind = LearningKind | "question";
+
+export function editorialEndpoint(kind: EditorialKind) {
+  return kind === "question" ? "/api/admin/questions" : `/api/admin/learning/${kind}`;
+}
+
+export function editorialEditPath(kind: EditorialKind, id: string) {
+  return kind === "question" ? `/admin/questions/${id}` : learningEditPath(kind, id);
+}
+
+export function editorialPreviewPath(kind: EditorialKind, id: string) {
+  return `/admin/preview/${kind}/${id}`;
+}

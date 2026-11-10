@@ -115,6 +115,7 @@ test("a session link does not work in another browser", async ({ browser, page }
   await page.goto("/testove");
   await waitForPage(page);
   await page.locator(`#tema-${topicId}`).getByRole("button", { name: "Започни упражнение" }).click();
+  await expect(page).toHaveURL(new RegExp(`/testove/${topicId}/[0-9a-f-]{36}$`), { timeout: 15000 });
   await expect(page.getByText("Въпрос 1 от 3")).toBeVisible();
   const other = await browser.newContext();
   const stranger = await other.newPage();

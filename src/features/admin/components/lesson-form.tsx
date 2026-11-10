@@ -10,7 +10,7 @@ import { blocksFromContent, blockTypeLabels, contentFromBlocks, emptyBlock, type
 import { EditorFrame } from "./editor-frame";
 import { SelectField, TextAreaField, TextField } from "./form-fields";
 import { SlugField } from "./slug-field";
-import { useLearningEditor } from "./use-learning-editor";
+import { useEditorialEditor } from "./use-editorial-editor";
 
 export type LessonFormRecord = { id: string; title: string; slug: string; topicId: string; content: LearningContent; status: "DRAFT" | "PUBLISHED"; updatedAt: string };
 
@@ -18,7 +18,7 @@ const linkHint = "Връзка се пише така: [текст](/адрес)
 const blockTypes = Object.keys(blockTypeLabels) as EditableBlockType[];
 
 export function LessonForm({ record, topics }: { record?: LessonFormRecord | undefined; topics: { id: string; title: string; status: "DRAFT" | "PUBLISHED" }[] }) {
-  const editor = useLearningEditor("lesson", record ?? {});
+  const editor = useEditorialEditor("lesson", record ?? {});
   // Saved blocks get "saved-" keys while rendering; blocks added later get "new-" keys in event handlers.
   const nextNewKey = useRef(0);
   const [title, setTitle] = useState(record?.title ?? "");

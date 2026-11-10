@@ -5,12 +5,12 @@ import { fieldMessages } from "../editorial-messages";
 import { EditorFrame } from "./editor-frame";
 import { TextAreaField, TextField } from "./form-fields";
 import { SlugField } from "./slug-field";
-import { useLearningEditor } from "./use-learning-editor";
+import { useEditorialEditor } from "./use-editorial-editor";
 
 export type AuthorFormRecord = { id: string; name: string; slug: string; context: string | null; status: "DRAFT" | "PUBLISHED"; updatedAt: string };
 
 export function AuthorForm({ record }: { record?: AuthorFormRecord | undefined }) {
-  const editor = useLearningEditor("author", record ?? {});
+  const editor = useEditorialEditor("author", record ?? {});
   const [name, setName] = useState(record?.name ?? "");
   const [slug, setSlug] = useState(record?.slug ?? "");
   const [context, setContext] = useState(record?.context ?? "");

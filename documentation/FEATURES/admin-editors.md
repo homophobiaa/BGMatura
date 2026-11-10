@@ -14,7 +14,7 @@ They add no new write path: every change still goes through
 | Lists | `src/app/admin/(editorial)/learning/[kind]/page.tsx`, `src/features/admin/server/learning-lists.ts` | Search, status filter, 20 per page, delete control |
 | Filters | `src/features/admin/learning-list-filters.ts` | Reads `q`, `status`, `page` from the URL; builds links that keep them |
 | Editors | `src/app/admin/(editorial)/learning/[kind]/new` and `[id]`, `src/features/admin/components/*-form.tsx` | One form per kind |
-| Save/publish state | `src/features/admin/components/use-learning-editor.ts` | Sends commands, keeps `expectedUpdatedAt`, blocks double submits |
+| Save/publish state | `src/features/admin/components/use-editorial-editor.ts` | Sends commands, keeps `expectedUpdatedAt`, blocks double submits |
 | Shared frame | `src/features/admin/components/editor-frame.tsx` | Status, feedback, save button, preview/publish/unpublish |
 | Client API | `src/features/admin/components/editorial-request.ts` | `fetch` + typed response parsing |
 | Messages | `src/features/admin/editorial-messages.ts` | Bulgarian text for the services' English messages |

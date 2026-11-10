@@ -16,6 +16,10 @@ export default async function AdminPage() {
         <h2 className="text-title"><Link href={learningListPath(kind)} className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">{learningKindLabels[kind].plural}</Link></h2>
         <p>{learningKindLabels[kind].description}</p>
       </li>)}
+      <li className="rounded-lg bg-surface-card p-4 md:p-6">
+        <h2 className="text-title"><Link href="/admin/questions" className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">Въпроси</Link></h2>
+        <p>Банка с въпроси за упражнения и пробни матури.</p>
+      </li>
     </ul>
   </section>;
 }
