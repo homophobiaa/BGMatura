@@ -213,6 +213,6 @@ Work from issues with observable acceptance criteria. Inspect existing patterns,
 
 ## MVP boundaries
 
-The first release focuses on БЕЛ preparation. Student accounts, payments, AI tutoring or essay scoring, other subjects, leaderboards, and personalized progress systems are outside the MVP.
+The first release focuses on БЕЛ preparation. Payments, AI tutoring or essay scoring, other subjects, leaderboards, and personalized progress systems are outside the MVP. Learning, practice, and exams never require an account; an optional student sign-in that keeps results across devices is planned after the anonymous loop works (see `.claude/PROJECT_DIRECTION.md` section 4.8).
 
 Educational content must be reviewed before publication. Exam composition and scoring must be checked against the official specification for the targeted year. Official past papers, adapted material, and original practice content must be clearly distinguished, with sources and usage rights reviewed before republication.

@@ -36,6 +36,10 @@ Other fixed wording:
 | Context | Text |
 | --- | --- |
 | Admin area link (admins only) | Администрация |
+| Student sign-in action (signed out) | Вход |
+| Profile menu items (signed in) | Моята история · Изход |
+| Saved-progress prompt after a result | Запази прогреса |
+| Delete account and data | Изтрий профила и данните ми |
 | Exam timer label | Оставащо време |
 | Submit exam | Предай матурата |
 | Result states | Вярно · Грешно · Частично вярно · За самооценка |

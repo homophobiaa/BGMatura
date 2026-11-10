@@ -33,8 +33,8 @@ If documents conflict, preserve correctness and security, then explain the confl
 - **Zod** for validating untrusted input. Use **React Hook Form** where forms merit it; don't introduce unnecessary form machinery for trivial forms.
 - Prefer **Server Components** for pages/data presentation; use **Client Components** for genuine interactivity.
 - Use **Server Actions** or **Route Handlers** according to the interaction: choose whichever gives clear, safe boundaries. Do not add a parallel API layer solely for uniformity.
-- Authentication is required for administration; public studying/practice must not require student accounts in the MVP.
-- No separate ASP.NET backend, microservices, student accounts, payments, AI scoring, or other non-MVP systems unless product direction is explicitly changed.
+- Authentication is required for administration. Students may optionally sign in to keep their results (`.claude/PROJECT_DIRECTION.md` §4.8), but public studying, practice, and exams must never require an account.
+- No separate ASP.NET backend, microservices, payments, AI scoring, or other non-MVP systems unless product direction is explicitly changed.
 
 Versions, package manager, commands, auth provider, deployment provider, and testing libraries are **not fixed by this document**. Follow the repository's actual setup; when missing, choose a mainstream maintainable option and record the decision before spreading it across the codebase.
 
@@ -116,7 +116,7 @@ For assessment, the grading service is a single source of truth shared by practi
 - Keep database credentials, session secrets, admin credentials, and answer keys out of client bundles, logs, source control, and public responses.
 - Follow safe session/cookie handling and protect state-changing requests using the chosen framework/auth library's safeguards.
 - Avoid raw HTML and unsafe rendering of untrusted Markdown/content. Sanitize or restrict renderers where needed.
-- Minimize student data collection: anonymous-first MVP, no unnecessary profiling or personal information.
+- Minimize student data collection: anonymous-first, with an optional sign-in that stores only the name and verified email Google provides, no profiling or extra personal information, and a way for the student to delete it.
 - Do not log sensitive submissions, credentials, or session tokens. Provide safe errors to users without exposing internals.
 
 ## 8. UI and accessibility
