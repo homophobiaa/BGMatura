@@ -13,8 +13,11 @@ export const adminTestEnvironment = {
   ADMIN_EMAILS: "admin@example.test,desktop-chromium@example.test,mobile-chromium@example.test,tablet-chromium@example.test",
 };
 
-/** Mint real Better Auth database sessions and signed cookies without contacting Google. */
-export async function createTestAdmin(database: PrismaClient, email = "admin@example.test", emailVerified = true) {
+/**
+ * Mint real Better Auth database sessions and signed cookies without contacting Google. The email alone decides the
+ * role, as in production: an address on `ADMIN_EMAILS` is an administrator and any other verified address is a student.
+ */
+export async function createTestAdmin(database: PrismaClient, email = "admin@example.test", emailVerified = true, name = "Тестов редактор") {
   const auth = betterAuth({
     baseURL: adminTestEnvironment.BETTER_AUTH_URL, secret: adminTestEnvironment.BETTER_AUTH_SECRET,
     database: prismaAdapter(database, { provider: "postgresql", transaction: true }),
@@ -23,8 +26,13 @@ export async function createTestAdmin(database: PrismaClient, email = "admin@exa
     plugins: [testUtils()],
   });
   const context = await auth.$context;
-  const user = await context.test.saveUser(context.test.createUser({ id: randomUUID(), email, emailVerified, name: "Тестов редактор" }));
+  const user = await context.test.saveUser(context.test.createUser({ id: randomUUID(), email, emailVerified, name }));
   const login = await context.test.login({ userId: user.id });
   login.headers.set("origin", adminTestEnvironment.BETTER_AUTH_URL);
   return { ...login, cleanup: () => database.user.delete({ where: { id: user.id } }) };
+}
+
+/** A signed-in student: a real session for a verified Google account that is not on the admin allowlist. */
+export function createTestStudent(database: PrismaClient, email = "student@example.test", emailVerified = true) {
+  return createTestAdmin(database, email, emailVerified, "Тестов ученик");
 }

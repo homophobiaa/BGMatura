@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTestAdmin, adminTestEnvironment } from "../fixtures/admin-session";
 import { getDatabase } from "@/server/database";
 import { createAdminAuth, getAdminAuth } from "@/features/admin/server/auth";
-import { AdminAuthorizationError, requireAdmin, requireMutationOrigin } from "@/features/admin/server/authorization";
+import {
+  AdminAuthorizationError, getSignedInUser, requireAdmin, requireMutationOrigin, requireSignedInUser, SignInRequiredError,
+} from "@/features/admin/server/authorization";
 import { AdminConfigurationError, getAdminEnvironment, isApprovedAdmin } from "@/features/admin/server/environment";
 
 const database = getDatabase();
@@ -58,7 +60,8 @@ describe("real database sessions and production admin authorization", () => {
     const profile = { aud: "test", azp: "test", email: "ADMIN@example.test", email_verified: true, exp: 9999999999, iat: 0, family_name: "Editor", given_name: "Test", iss: "https://accounts.google.com", name: "Test Editor", picture: "https://example.test/photo", sub: "test-google-subject" };
     expect(google.mapProfileToUser(profile)).toEqual({ name: "Test Editor" });
     expect(() => google.mapProfileToUser({ ...profile, email_verified: false })).toThrow();
-    expect(() => google.mapProfileToUser({ ...profile, email: "outsider@example.test" })).toThrow();
+    // Any verified Google account may sign in as a student; being an administrator is decided separately.
+    expect(google.mapProfileToUser({ ...profile, email: "student@example.test" })).toEqual({ name: "Test Editor" });
     const denied = await auth.handler(new Request(`${adminTestEnvironment.BETTER_AUTH_URL}/api/auth/sign-up/email`, { method: "POST", headers: { "Content-Type": "application/json", Origin: adminTestEnvironment.BETTER_AUTH_URL }, body: JSON.stringify({ name: "Denied", email: "outsider@example.test", password: "not-a-real-password" }) }));
     expect(denied.ok).toBe(false);
     expect(await database.user.findUnique({ where: { email: "outsider@example.test" } })).toBeNull();
@@ -66,7 +69,7 @@ describe("real database sessions and production admin authorization", () => {
     const secure = createAdminAuth(database, { ...getAdminEnvironment(), BETTER_AUTH_URL: "https://admin.example.test" });
     expect((await secure.$context).authCookies.sessionToken.attributes).toMatchObject({ httpOnly: true, secure: true, sameSite: "lax" });
   });
-  it("provisions through the production OAuth adapter hooks and rolls back unapproved users/providers", async () => {
+  it("provisions verified accounts through the production OAuth adapter hooks and rolls back unverified users and other providers", async () => {
     const context = await getAdminAuth().$context;
     const user = { email: "admin@example.test", name: "Provisioned test editor", emailVerified: true, image: "https://example.test/unnecessary-photo" };
     const account = { providerId: "google", accountId: "fixture-google-account" };
@@ -75,12 +78,69 @@ describe("real database sessions and production admin authorization", () => {
     expect(provisioned.user.image).toBeNull();
     const login = await context.internalAdapter.createSession(provisioned.user.id);
     expect(login.userId).toBe(provisioned.user.id);
-    for (const candidate of [{ ...user, email: "outsider@example.test" }, { ...user, email: "desktop-chromium@example.test", emailVerified: false }]) {
+    // A verified account that is not an administrator is provisioned as a student, still without a profile image.
+    const student = await context.internalAdapter.createOAuthUser({ ...user, email: "outsider@example.test" }, { ...account, accountId: "fixture-student-account" });
+    cleanups.push(() => database.user.delete({ where: { id: student.user.id } }));
+    expect(student.user.image).toBeNull();
+    for (const candidate of [{ ...user, email: "unverified-student@example.test", emailVerified: false }, { ...user, email: "desktop-chromium@example.test", emailVerified: false }]) {
       await expect(context.internalAdapter.createOAuthUser(candidate, { ...account, accountId: candidate.email })).rejects.toThrow();
       expect(await database.user.findUnique({ where: { email: candidate.email } })).toBeNull();
     }
     await expect(context.internalAdapter.createOAuthUser({ ...user, email: "mobile-chromium@example.test" }, { providerId: "credential", accountId: "denied-fixture" })).rejects.toThrow();
     expect(await database.user.findUnique({ where: { email: "mobile-chromium@example.test" } })).toBeNull();
+  });
+});
+
+describe("student and admin roles on one sign-in", () => {
+  it("gives an allowlisted account the admin role and any other verified account the student role", async () => {
+    const admin = await session();
+    const student = await session("student@example.test");
+    await expect(getSignedInUser(admin.headers)).resolves.toEqual({ id: admin.user.id, email: admin.user.email, name: admin.user.name, role: "admin" });
+    await expect(getSignedInUser(student.headers)).resolves.toEqual({ id: student.user.id, email: student.user.email, name: student.user.name, role: "student" });
+  });
+
+  it("returns nobody for no session, a forged cookie, an expired or revoked session, or an unverified email", async () => {
+    expect(await getSignedInUser(new Headers())).toBeNull();
+    expect(await getSignedInUser(new Headers({ cookie: "better-auth.session_token=forged" }))).toBeNull();
+    const expired = await session("student@example.test");
+    await database.session.update({ where: { id: expired.session.id }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    expect(await getSignedInUser(expired.headers)).toBeNull();
+    const revoked = await session("revoked-student@example.test");
+    await database.session.delete({ where: { id: revoked.session.id } });
+    expect(await getSignedInUser(revoked.headers)).toBeNull();
+    const unverified = await session("unverified-student@example.test", false);
+    expect(await getSignedInUser(unverified.headers)).toBeNull();
+  });
+
+  it("works the role out again on every request, so changing the allowlist changes it at once", async () => {
+    const admin = await session();
+    const student = await session("student@example.test");
+    vi.stubEnv("ADMIN_EMAILS", "student@example.test");
+    await expect(getSignedInUser(student.headers)).resolves.toMatchObject({ role: "admin" });
+    await expect(requireAdmin(student.headers)).resolves.toMatchObject({ email: "student@example.test" });
+    await expect(getSignedInUser(admin.headers)).resolves.toMatchObject({ role: "student" });
+    await expect(requireAdmin(admin.headers)).rejects.toBeInstanceOf(AdminAuthorizationError);
+  });
+
+  it("never lets a student into administration, whatever the request claims", async () => {
+    const student = await session("student@example.test");
+    expect(() => requireMutationOrigin(student.headers)).not.toThrow();
+    await expect(requireAdmin(student.headers)).rejects.toBeInstanceOf(AdminAuthorizationError);
+    const forged = new Headers(student.headers);
+    forged.set("x-role", "admin");
+    forged.set("x-admin", "true");
+    forged.set("cookie", `${forged.get("cookie") ?? ""}; role=admin; admin=true`);
+    await expect(requireAdmin(forged)).rejects.toBeInstanceOf(AdminAuthorizationError);
+    expect((await getSignedInUser(forged))?.role).toBe("student");
+  });
+
+  it("lets any signed-in person through requireSignedInUser and refuses visitors", async () => {
+    const admin = await session();
+    const student = await session("student@example.test");
+    await expect(requireSignedInUser(admin.headers)).resolves.toMatchObject({ role: "admin" });
+    await expect(requireSignedInUser(student.headers)).resolves.toMatchObject({ role: "student" });
+    await expect(requireSignedInUser(new Headers())).rejects.toBeInstanceOf(SignInRequiredError);
+    await expect(requireSignedInUser(new Headers({ cookie: "better-auth.session_token=forged" }))).rejects.toBeInstanceOf(SignInRequiredError);
   });
 });
 
