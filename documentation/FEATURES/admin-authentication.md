@@ -1,12 +1,12 @@
-# Admin authentication
+# Authentication: administrators and optional students
 
-> Decision record for #3; implementation in #21–23. Better Auth 1.7.15 with its Prisma adapter.
+> Decision record for #3; implementation in #21–23 (administrators) and #194 (student role). Better Auth 1.7.15 with its Prisma adapter.
 
 ## Scope
 
-- Today only administrators sign in. Students may **optionally** sign in in the future to keep their results; this was decided in #193 (`.claude/PROJECT_DIRECTION.md` §4.8) and is built in #194 to #199. Until #194 lands, nothing below changes.
-- There is a single **admin** role. No role hierarchy or editorial approval workflow (§4.7, "Not required"). #194 adds a separate **student** role to the same Google sign-in; administrators remain limited to the allowlist, and a student account can never reach the admin area.
-- Planned for the student role (decided in #193, details in #194 and #198): only the name and verified email from Google are kept, no profile image and no passwords; students can delete their account and data; the approach to minors and the legal or privacy review needed before release are recorded in #193 and #198.
+- Administrators sign in to edit content. Students may **optionally** sign in to keep their results (decided in #193, `.claude/PROJECT_DIRECTION.md` §4.8). Learning, practice, and exams never require an account.
+- There are two roles, **admin** and **student**. No role hierarchy or editorial approval workflow (§4.7, "Not required"). The role is **derived from the allowlist on every request** (see below). It is never stored and never taken from the browser.
+- Student data is minimal: the name and verified email from Google only, no profile image, no passwords. Account and data deletion, retention, the privacy notice, and the approach to minors are #198.
 - Expected number of admins: a handful of known people.
 
 ## Decision
@@ -38,12 +38,20 @@ Admins are listed in the environment variable `ADMIN_EMAILS`: a comma-separated 
 - Only emails that Google reports as **verified** (`email_verified: true`) are accepted.
 - Gmail addresses are never reassigned to a new owner, so an email is a stable identity for personal accounts. If an admin uses a school or company Google Workspace address, that domain's administrator could recreate the address; prefer personal Gmail accounts for admins.
 
-### Rejecting unapproved identities
+### Who may sign in, and who is an administrator
 
-Anyone with a Google account can complete Google's sign-in screen, so the allowlist is checked by our server in two places:
+Any Google account with a **verified** email may sign in, and becomes a student account. Being an administrator is a separate decision that our server makes, again on every request:
 
-1. **At sign-in.** Before Better Auth creates a user or session, the server checks the verified Google email against `ADMIN_EMAILS`. If it is not listed or not verified, sign-in is refused, nothing is stored, and the person sees „Нямаш достъп до администрацията.“
-2. **On every admin request.** The shared admin guard (#23) loads the session on the server and checks the stored email against the allowlist again. Removing an email from `ADMIN_EMAILS` therefore ends that person's access on their next request, even if they still have a valid session cookie.
+1. **At sign-in.** Before Better Auth creates a user or session, the server requires a verified Google email. It stores the name and email, discards the profile image, and allows Google only. Signing in grants no admin access.
+2. **On every request.** The server loads the database session without any cookie cache and works the role out from `ADMIN_EMAILS` (`roleForEmail`). Removing an email from the allowlist turns that person into a student on their next request, even with a valid session cookie, and adding one promotes them at once. A student session, however valid, never passes the admin guard.
+
+| Helper | Use |
+| --- | --- |
+| `getSignedInUser(headers)` | Any signed-in person with their derived role, or `null` |
+| `requireSignedInUser(headers)` | For student features such as saved results: administrators and students pass, visitors get `SignInRequiredError` |
+| `requireAdmin(headers)` | Administration only; a student gets `AdminAuthorizationError` |
+
+A signed-in student who opens `/admin` sees „Нямаш достъп до администрацията.“ with a sign-out button, instead of being sent round to the sign-in page.
 
 Hiding admin links in the UI is not access control; every admin page, Server Action, and Route Handler must call the guard (`.claude/CLAUDE.md` §7).
 
@@ -82,13 +90,13 @@ Names only. Real values live in the hosting provider's secret settings and a loc
 These names are in `.env.example`. Authentication initializes lazily on admin
 requests; `src/features/admin/server/environment.ts` validates its configuration
 without exposing supplied values. Public builds/pages need no Google credentials.
-Apply `npm run db:deploy` before signing in to create the four `Admin*` tables.
+Apply `npm run db:deploy` before signing in to create the four sign-in tables: `AuthUser`, `AuthSession`, `AuthAccount`, and `AuthVerification` (renamed from `Admin*` in #194; existing rows and sessions are kept).
 
 ## Implementation and verification
 
 - `/admin/sign-in` has the labeled Google control; `/admin` checks the session and
   offers sign-out. `/api/auth/[...all]` delegates to Better Auth. The Google provider
-  validates the verified allowlisted profile; the user-create hook checks again.
+  requires a verified profile; the user-create hook checks again.
   The account-create hook permits Google only. Password authentication and account
   linking are disabled. No test plugin exists in the production auth factory.
 - `src/features/admin/server/authorization.ts` reloads the database session with
@@ -98,7 +106,7 @@ Apply `npm run db:deploy` before signing in to create the four `Admin*` tables.
 - Cookies are signed, HttpOnly, SameSite=Lax and Secure for HTTPS. The URL validator
   permits plain HTTP only on loopback. OAuth account tokens are encrypted at rest;
   profile images are discarded. Better Auth's in-memory rate limiter is enabled
-  (60 requests/minute per process); it is not a distributed abuse quota.
+  (60 requests/minute per process); it is not a distributed abuse quota (a shared limit is #204).
 - Admin responses and previews use private/no-store and noindex headers. Preview
   pages also include noindex metadata. Errors never return credentials or raw
   database/provider exceptions. Missing configuration fails closed.

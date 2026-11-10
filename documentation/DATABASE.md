@@ -314,14 +314,14 @@ Public pages additionally enforce published ancestry and safe stored blocks;
 see [public learning](FEATURES/public-learning.md). They reuse the lesson model
 and versioned content format introduced in #26/#30.
 
-## Admin identities
+## Sign-in identities (administrators and students)
 
-Migration `20261103120000_admin_auth` adds `AdminUser`, `AdminSession`,
-`AdminAccount`, and `AdminVerification`. Prisma model names follow Better Auth's
-adapter contract; table mapping makes their admin purpose explicit. IDs are opaque
+Migration `20261103120000_admin_auth` added the sign-in tables, and `20261110110000_neutral_auth_tables` renamed them to `AuthUser`, `AuthSession`,
+`AuthAccount`, and `AuthVerification`, because they now serve administrators and optional students. Prisma model names follow Better Auth's
+adapter contract; table mapping gives the neutral names. IDs are opaque
 text; email/session token and provider/account pairs are unique. User removal
 cascades only to that user's sessions/accounts. Better Auth encrypts OAuth tokens.
-No student identity or attempt table is introduced. See
+A student is an ordinary row in `AuthUser`; whether someone is an administrator is decided from the allowlist on each request, not stored. See
 [authentication](FEATURES/admin-authentication.md) for provisioning/session behavior.
 
 Editorial writes use serializable transactions and optimistic updatedAt checks.

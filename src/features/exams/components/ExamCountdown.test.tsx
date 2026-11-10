@@ -284,7 +284,8 @@ describe("ExamCountdown", () => {
         "Остава 1 минута.",
         "Времето изтече.",
       ]);
-    });
+      // A whole 31-minute exam tail is simulated second by second, about 1,900 renders, which is slower than the default limit.
+    }, 30_000);
 
     it("announces only the latest milestone when a throttled tab skipped several", () => {
       render(<ExamCountdown deadline={deadlineIn(31 * MINUTE)} serverNow={SERVER_NOW} />);
