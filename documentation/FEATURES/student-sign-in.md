@@ -15,9 +15,17 @@ Signing in is optional. Learning, practice and mock exams work without an accoun
 - Sign-out posts to the Better Auth `/api/auth/sign-out` endpoint and returns to the home page.
 - `next` (where to go after signing in) goes through `safeReturnPath`: only paths on this site are kept; other websites, protocol-relative addresses, backslashes, control characters, very long values, and the sign-in and API paths fall back to `/`.
 
+## History (Моята история)
+
+- `/istoriya` lists the signed-in student's finished attempts, newest first, ten at a time ("Покажи още"). Each entry shows the mode, date, how many questions were answered, and points only from automatically graded questions. Written work is shown as self-review and never adds to the points.
+- `/istoriya/{id}` is the full review: the question as captured with the attempt (not the live content), the student's answer, an outcome in words and a symbol, and the explanation. Empty, loading-failure and not-found states are in Bulgarian.
+- `GET /api/account/attempts?cursor=` serves the pages. The account id comes only from the verified session; a cursor cannot widen it.
+- An attempt linked to an account opens through the account from any device, without the browser token, and does not expire with the 30-day token (`AttemptAccess.userId`, set only by server code). Writes still need the token.
+
 ## Tests
 
 - `src/features/account/return-path.test.ts` — the return-path rules.
+- `tests/integration/student-history.test.ts` — paging, isolation between students, access from another device.
 - `tests/browser/student-sign-in.spec.ts` — the page, the registration redirect, the header link, and a signed-in student signing out (desktop, tablet, phone).
 
 ## Not covered here

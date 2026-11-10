@@ -15,7 +15,12 @@ const action = z.discriminatedUnion("operation", [
 ]);
 
 export function GET(request: NextRequest, context: Context) {
-  return attemptResponse(async () => attemptJson(await readAttempt(attemptAccess(request, (await context.params).id))));
+  return attemptResponse(async () => {
+    const access = attemptAccess(request, (await context.params).id);
+    // Another device has no browser token, so a signed-in student's own attempts open through the account instead.
+    const user = await getSignedInUser(request.headers).catch(() => null);
+    return attemptJson(await readAttempt({ ...access, userId: user?.id }));
+  });
 }
 
 export function POST(request: NextRequest, context: Context) {
