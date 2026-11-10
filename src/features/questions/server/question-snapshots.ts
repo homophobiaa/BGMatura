@@ -10,7 +10,7 @@ import { getDatabase } from "@/server/database";
 import type { QuestionDefinition } from "./contracts";
 import { InvalidQuestionDefinitionError } from "./grading-errors";
 import type { PublicQuestionSource } from "./question-associations";
-import { parseRubric, toQuestionDefinition } from "./question-definitions";
+import { parseRubric, toQuestionDefinition, type QuestionRecord } from "./question-definitions";
 
 type QuestionSnapshotDatabase = Pick<Prisma.TransactionClient, "question" | "questionSnapshot">;
 
@@ -38,18 +38,42 @@ export interface QuestionSnapshotView {
  * The snapshot contains answer keys and must stay on the server.
  */
 export async function captureQuestionSnapshot(questionId: string, database: QuestionSnapshotDatabase = getDatabase()) {
-  const question = await database.question.findUnique({
-    where: { id: questionId },
+  const [snapshot] = await captureQuestionSnapshots([questionId], database);
+  if (!snapshot) throw new InvalidQuestionDefinitionError("Question snapshot could not be captured.");
+  return snapshot;
+}
+
+export async function captureQuestionSnapshots(questionIds: readonly string[], database: QuestionSnapshotDatabase) {
+  if (!questionIds.length) return [];
+  const questions = await database.question.findMany({
+    where: { id: { in: [...questionIds] } },
     include: { options: true, provenance: { select: { origin: true, attribution: true } } },
   });
+  const byId = new Map(questions.map((question) => [question.id, question]));
+  const data = questionIds.map((questionId) => {
+    const question = byId.get(questionId);
+    if (!question) throw new InvalidQuestionDefinitionError(`Question ${questionId} does not exist, so it cannot be captured.`);
+    if (question.status !== "PUBLISHED") {
+      throw new InvalidQuestionDefinitionError(`Question ${questionId} must be published before an attempt can capture it.`);
+    }
+    return snapshotData(question);
+  });
+  const keys = data.map(({ questionId, contentHash }) => ({ questionId, contentHash }));
+  // Use a consistent insertion order when simultaneous attempts share bank questions.
+  await database.questionSnapshot.createMany({
+    data: [...data].sort((first, second) => first.questionId.localeCompare(second.questionId)),
+    skipDuplicates: true,
+  });
+  const stored = await database.questionSnapshot.findMany({ where: { OR: keys } });
+  const byQuestion = new Map(stored.map((snapshot) => [snapshot.questionId, snapshot]));
+  return questionIds.map((questionId) => {
+    const snapshot = byQuestion.get(questionId);
+    if (!snapshot) throw new InvalidQuestionDefinitionError("Question snapshot could not be captured.");
+    return snapshot;
+  });
+}
 
-  if (question === null) {
-    throw new InvalidQuestionDefinitionError(`Question ${questionId} does not exist, so it cannot be captured.`);
-  }
-
-  if (question.status !== "PUBLISHED") {
-    throw new InvalidQuestionDefinitionError(`Question ${questionId} must be published before an attempt can capture it.`);
-  }
+function snapshotData(question: QuestionRecord & { provenance: PublicQuestionSource | null }) {
 
   // Key order is fixed by the code below and by toQuestionDefinition, so equal questions
   // always produce equal text and therefore equal hashes.
@@ -59,25 +83,12 @@ export async function captureQuestionSnapshot(questionId: string, database: Ques
     definition: toQuestionDefinition(question),
     source: question.provenance,
   });
-  const contentHash = createHash("sha256").update(contentText).digest("hex");
-
-  // Insert-or-ignore keeps this safe when two attempts start at the same moment, even
-  // inside a transaction, where a failed insert would otherwise abort everything.
-  await database.questionSnapshot.createMany({
-    data: [
-      {
-        questionId,
-        formatVersion: SNAPSHOT_FORMAT_VERSION,
-        content: z.record(z.string(), z.json()).parse(JSON.parse(contentText)),
-        contentHash,
-      },
-    ],
-    skipDuplicates: true,
-  });
-
-  return database.questionSnapshot.findUniqueOrThrow({
-    where: { questionId_contentHash: { questionId, contentHash } },
-  });
+  return {
+    questionId: question.id,
+    formatVersion: SNAPSHOT_FORMAT_VERSION,
+    content: z.record(z.string(), z.json()).parse(JSON.parse(contentText)),
+    contentHash: createHash("sha256").update(contentText).digest("hex"),
+  };
 }
 
 const optionSchema = z.strictObject({ id: z.string(), text: z.string() });
