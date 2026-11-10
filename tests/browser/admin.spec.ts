@@ -52,7 +52,7 @@ test("admin endpoints isolate drafts, preview safely, publish fresh pages and re
   await expect(page.getByRole("button", { name: "Вход с Google" })).toBeVisible();
   await context.addCookies(admin.cookies);
   await page.goto("/admin");
-  await expect(page.getByRole("button", { name: "Изход" })).toBeVisible();
+  await expect(page.locator("main").getByRole("button", { name: "Изход" })).toBeVisible();
   const attack = '<img src=x onerror="window.__unsafe=true">';
   const authorInput = { name: `Тестов автор ${prefix}`, slug: `${prefix}-author`, context: `Само тестови данни. ${attack}` };
   let author = await saved(await mutate(request, "author", { operation: "save", draft: authorInput }));
@@ -103,7 +103,7 @@ test("admin endpoints isolate drafts, preview safely, publish fresh pages and re
   const linked = await mutate(request, "topic", { operation: "delete", id: topic.id, confirmation: topic.slug });
   expect(linked.status()).toBe(409);
   await page.goto("/admin");
-  await page.getByRole("button", { name: "Изход" }).click();
+  await page.locator("main").getByRole("button", { name: "Изход" }).click();
   await expect(page).toHaveURL(/\/admin\/sign-in/);
   expect(await database.session.findUnique({ where: { id: admin.session.id } })).toBeNull();
   expect((await mutate(request, "author", { operation: "unpublish", id: author.id })).status()).toBe(401);

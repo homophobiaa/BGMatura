@@ -20,8 +20,8 @@ test("a signed-in student sees why administration is closed, cannot use it, and 
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole("heading", { name: "Администрация", exact: true })).toBeVisible();
     await expect(page.getByText("Нямаш достъп до администрацията")).toBeVisible();
-    await expect(page.getByText(student.user.name)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Изход" })).toBeVisible();
+    await expect(page.locator("main").getByText(student.user.name)).toBeVisible();
+    await expect(page.locator("main").getByRole("button", { name: "Изход" })).toBeVisible();
 
     // The same valid session is refused by the API, and sees no editor preview.
     const refused = await context.request.post("/api/admin/questions", {
@@ -34,7 +34,7 @@ test("a signed-in student sees why administration is closed, cannot use it, and 
 
     // Signing out ends the session for real.
     await page.goto("/admin");
-    await page.getByRole("button", { name: "Изход" }).click();
+    await page.locator("main").getByRole("button", { name: "Изход" }).click();
     await expect(page).toHaveURL(/\/admin\/sign-in/);
     expect(await database.session.findUnique({ where: { id: student.session.id } })).toBeNull();
   } finally {
