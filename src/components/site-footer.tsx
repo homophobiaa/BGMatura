@@ -12,6 +12,7 @@ export function SiteFooter() {
           { href: "/literatura", label: "Литература" },
           { href: "/balgarski-ezik", label: "Български език" },
           { href: "/za-proekta", label: "За проекта" },
+          { href: "/admin/sign-in", label: "Вход за редактори" },
         ].map(({ href, label }) =>
           <Link key={href} href={href} className="inline-flex min-h-11 items-center rounded-md px-3 py-3 text-primary underline underline-offset-4">{label}</Link>)}
       </nav>
