@@ -12,6 +12,11 @@ const ownerTokenPattern = /^[A-Za-z0-9_-]{43}$/;
 export interface AttemptAccess {
   readonly id: string;
   readonly token?: string | undefined;
+  /**
+   * A signed-in student's own id, set only by server code that has verified the session. It opens an attempt linked to
+   * that account from any device, without the browser token, and without the 30-day token expiry.
+   */
+  readonly userId?: string | undefined;
 }
 
 export function createOwnerToken() {
@@ -55,20 +60,24 @@ export async function withOwnedAttempt<T>(
   operation: (transaction: Prisma.TransactionClient, attempt: CapturedAttempt, now: Date) => Promise<T>,
   database?: PrismaClient,
 ): Promise<T> {
-  if (!z.uuid().safeParse(access.id).success || !access.token || !ownerTokenPattern.test(access.token)) {
-    throw new AttemptError("not-found");
-  }
-  const digest = ownerDigest(access.token);
+  const tokenValid = Boolean(access.token) && ownerTokenPattern.test(access.token ?? "");
+  const userValid = typeof access.userId === "string" && access.userId.length > 0;
+  if (!z.uuid().safeParse(access.id).success || (!tokenValid && !userValid)) throw new AttemptError("not-found");
+  // A digest that matches nothing when only the user is known, so one query serves both ways in.
+  const digest = tokenValid ? ownerDigest(access.token ?? "") : "";
+  const userId = userValid ? access.userId : null;
   return await (database ?? getDatabase()).$transaction(async (transaction) => {
-    const rows = await transaction.$queryRaw<{ id: string }[]>`
-      SELECT "id" FROM "Attempt"
-      WHERE "id" = ${access.id}::uuid AND "ownerDigest" = ${digest}
+    const rows = await transaction.$queryRaw<{ id: string; viaUser: boolean }[]>`
+      SELECT "id", ("userId" IS NOT NULL AND "userId" = ${userId}) AS "viaUser" FROM "Attempt"
+      WHERE "id" = ${access.id}::uuid AND (("ownerDigest" = ${digest} AND ${digest} <> '') OR ("userId" IS NOT NULL AND "userId" = ${userId}))
       FOR UPDATE
     `;
-    if (rows.length === 0) throw new AttemptError("not-found");
+    const row = rows[0];
+    if (!row) throw new AttemptError("not-found");
     const now = await databaseClock(transaction);
     const attempt = await transaction.attempt.findUniqueOrThrow({ where: { id: access.id }, include: attemptWithQuestions });
-    if (now >= attempt.accessUntil) throw new AttemptError("not-found");
+    // The browser token expires; an attempt a student chose to keep does not.
+    if (!row.viaUser && now >= attempt.accessUntil) throw new AttemptError("not-found");
     return operation(transaction, attempt, now);
   }, { isolationLevel: "ReadCommitted", timeout: 15000 });
 }

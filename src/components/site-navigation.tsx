@@ -50,6 +50,7 @@ export function SiteNavigation() {
     if (account === null) return <Link href="/vhod" className={linkClass} onClick={() => setOpenPath(null)}>Вход</Link>;
     return <>
       <Link href="/profil" className={linkClass} onClick={() => setOpenPath(null)}>{account.name}</Link>
+      <Link href="/istoriya" className={linkClass} onClick={() => setOpenPath(null)}>Моята история</Link>
       {account.role === "admin" ? <Link href="/admin" className={linkClass} onClick={() => setOpenPath(null)}>Администрация</Link> : null}
       <button type="button" className={linkClass} onClick={() => { void signOut(); }}>Изход</button>
     </>;

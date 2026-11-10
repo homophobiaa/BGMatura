@@ -100,3 +100,25 @@ test("the profile page needs sign-in, and a student can delete the profile after
     await student.cleanup().catch(() => undefined);
   }
 });
+
+test("the history page needs sign-in, shows an honest empty state and never opens a missing entry", async ({ page, context }, info) => {
+  await page.goto("/istoriya");
+  await expect(page).toHaveURL(/\/vhod\?next=\/istoriya$/);
+
+  const student = await createTestStudent(database, `student-${info.project.name}-${randomUUID()}@example.test`);
+  try {
+    await context.addCookies(student.cookies);
+    await page.goto("/");
+    await openMenuIfCollapsed(page);
+    await page.getByRole("link", { name: "Моята история" }).first().click();
+    await expect(page).toHaveURL(/\/istoriya$/);
+    await expect(page.getByRole("heading", { name: "Моята история", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Още няма запазени резултати" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Започни упражнение" })).toBeVisible();
+
+    await page.goto(`/istoriya/${randomUUID()}`);
+    await expect(page.getByRole("heading", { name: "Страницата не е намерена" })).toBeVisible();
+  } finally {
+    await student.cleanup().catch(() => undefined);
+  }
+});
