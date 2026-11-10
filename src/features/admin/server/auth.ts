@@ -3,9 +3,14 @@ import { betterAuth, APIError } from "better-auth";
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { getDatabase } from "@/server/database";
-import { getAdminEnvironment, isApprovedAdmin, type AdminEnvironment } from "./environment";
+import { getAdminEnvironment, type AdminEnvironment } from "./environment";
 
-/** No test plugins, password sign-in, registration form, or account linking. */
+/**
+ * One Google sign-in for administrators and, optionally, students. Any verified Google account may sign in; whether
+ * it is an administrator is decided separately and on every request from the `ADMIN_EMAILS` allowlist (see
+ * `roleForEmail`), so signing in grants no admin access. No test plugins, password sign-in, registration form, or
+ * account linking.
+ */
 export function createAdminAuth(database: PrismaClient, environment: AdminEnvironment) {
   return betterAuth({
     appName: "BG Matura",
@@ -21,8 +26,8 @@ export function createAdminAuth(database: PrismaClient, environment: AdminEnviro
         accessType: "online",
         includeGrantedScopes: false,
         mapProfileToUser(profile) {
-          if (!isApprovedAdmin(profile.email, profile.email_verified === true, environment.ADMIN_EMAILS)) {
-            throw new APIError("FORBIDDEN", { message: "Admin access is not permitted." });
+          if (profile.email_verified !== true) {
+            throw new APIError("FORBIDDEN", { message: "A verified Google email is required." });
           }
           return { name: profile.name };
         },
@@ -32,13 +37,15 @@ export function createAdminAuth(database: PrismaClient, environment: AdminEnviro
     account: { accountLinking: { enabled: false }, encryptOAuthTokens: true, storeAccountCookie: false },
     user: { changeEmail: { enabled: false }, deleteUser: { enabled: false } },
     advanced: { useSecureCookies: new URL(environment.BETTER_AUTH_URL).protocol === "https:" },
+    // Counted in memory per server process, so it is a brake rather than a shared quota; see the authentication document.
     rateLimit: { enabled: true, window: 60, max: 60 },
     logger: { disabled: true },
     databaseHooks: {
       user: {
+        // Only verified Google emails, and never a profile image: the name and email are all that is kept.
         create: { before: (user) => {
-          if (!isApprovedAdmin(user.email, user.emailVerified, environment.ADMIN_EMAILS)) {
-            throw new APIError("FORBIDDEN", { message: "Admin access is not permitted." });
+          if (!user.emailVerified) {
+            throw new APIError("FORBIDDEN", { message: "A verified Google email is required." });
           }
           return Promise.resolve({ data: { ...user, image: null } });
         } },

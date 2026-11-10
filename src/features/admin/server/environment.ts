@@ -38,3 +38,14 @@ export function getAdminEnvironment(environment: Record<string, string | undefin
 export function isApprovedAdmin(email: string, verified: boolean, emails = getAdminEnvironment().ADMIN_EMAILS): boolean {
   return verified && emails.includes(email.trim().toLowerCase());
 }
+
+export type AuthRole = "admin" | "student";
+
+/**
+ * The role of a signed-in account. It is worked out only from the server-side allowlist, again on every
+ * request, and never from anything the browser sends or a stored value, so removing an email from
+ * `ADMIN_EMAILS` demotes that person to a student on their next request.
+ */
+export function roleForEmail(email: string, verified: boolean, emails = getAdminEnvironment().ADMIN_EMAILS): AuthRole {
+  return isApprovedAdmin(email, verified, emails) ? "admin" : "student";
+}
