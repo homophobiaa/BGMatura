@@ -115,3 +115,17 @@ races. Run it using the isolated test database:
 npm run db:test:start
 npm run test:integration
 ```
+
+## Linking an attempt to a student account (optional)
+
+An account is optional. An attempt is always owned by its anonymous token (the per-attempt cookie); `Attempt.userId` is an extra, nullable link.
+
+- **At start.** When a signed-in student starts practice or an exam, the attempt is linked to them. Having no account, or sign-in being unavailable, never blocks starting.
+- **Claiming.** `POST /api/attempts/{id}` with `{ "operation": "claim" }` links an attempt to the signed-in student. It needs the attempt's own cookie, so only the browser that started it can claim it. The cookie is scoped to the one attempt's path, so claiming is per attempt, not "everything in this browser at once": the page that shows an attempt (or the save-progress prompt, #199) calls it while signed in.
+- **Idempotent.** Claiming again as the same student succeeds and changes nothing.
+- **Other accounts.** An attempt already linked to another account answers "not found" to a second account on the same browser, so nothing about the first account leaks.
+- **Not signed in.** `claim` answers `401`, and nothing is linked.
+- **The token keeps working.** Claiming never removes browser access; the original browser can still read and answer the attempt until its 30-day access ends.
+- **Deleting an account.** `onDelete: SetNull` detaches the attempts instead of deleting them; what deleting a profile should do with results is decided in #198.
+
+Tests: `tests/integration/attempt-claim.test.ts`.

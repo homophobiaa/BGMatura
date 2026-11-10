@@ -25,7 +25,7 @@ async function captureOrderedQuestions(transaction: Prisma.TransactionClient, qu
   });
 }
 
-export function startPractice(input: unknown, database: PrismaClient = getDatabase()) {
+export function startPractice(input: unknown, database: PrismaClient = getDatabase(), userId?: string) {
   const { topicId } = parseAttemptInput(practiceStartSchema, input);
   const token = createOwnerToken();
   return startTransaction(database, async (transaction) => {
@@ -47,7 +47,7 @@ export function startPractice(input: unknown, database: PrismaClient = getDataba
     const accessUntil = new Date(startedAt.getTime() + accessLifetimeSeconds * 1000);
     const attempt = await transaction.attempt.create({
       data: {
-        mode: "PRACTICE", title: topic.title, topicId, ownerDigest: ownerDigest(token),
+        mode: "PRACTICE", title: topic.title, topicId, ownerDigest: ownerDigest(token), userId: userId ?? null,
         startedAt, accessUntil, questions: { createMany: { data: captured } },
       },
       select: { id: true, accessUntil: true },
@@ -56,7 +56,7 @@ export function startPractice(input: unknown, database: PrismaClient = getDataba
   });
 }
 
-export function startExam(input: unknown, database: PrismaClient = getDatabase()) {
+export function startExam(input: unknown, database: PrismaClient = getDatabase(), userId?: string) {
   const { examId } = parseAttemptInput(examStartSchema, input);
   const token = createOwnerToken();
   return startTransaction(database, async (transaction) => {
@@ -73,7 +73,7 @@ export function startExam(input: unknown, database: PrismaClient = getDatabase()
     const attempt = await transaction.attempt.create({
       data: {
         mode: "EXAM", title: exam.title, examId, configurationId: exam.configurationId,
-        ownerDigest: ownerDigest(token), startedAt, deadline, accessUntil,
+        ownerDigest: ownerDigest(token), userId: userId ?? null, startedAt, deadline, accessUntil,
         questions: { createMany: { data: captured } },
       },
       select: { id: true, accessUntil: true },

@@ -8,7 +8,8 @@ datasource db {
   provider = "postgresql"
 }
 
-/// Better Auth identities are administrators only; students remain anonymous.
+/// Better Auth identities: any verified Google account is a student, and the admin role comes from the allowlist.
+/// An account is optional; attempts work without one and can be linked to it (see Attempt.userId).
 model User {
   id            String    @id
   name          String
@@ -19,6 +20,7 @@ model User {
   updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
   sessions      Session[]
   accounts      Account[]
+  attempts      Attempt[]
 
   @@map("AuthUser")
 }
@@ -361,6 +363,9 @@ model Attempt {
   mode            AttemptMode
   state           AttemptState       @default(ACTIVE)
   ownerDigest     String             @unique
+  /// Set when a signed-in student starts or claims the attempt. The anonymous token keeps working either way.
+  userId          String?
+  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
   accessUntil     DateTime           @db.Timestamptz(3)
   startedAt       DateTime           @db.Timestamptz(3)
   deadline        DateTime?          @db.Timestamptz(3)
@@ -378,6 +383,7 @@ model Attempt {
   @@index([accessUntil])
   @@index([examId])
   @@index([configurationId])
+  @@index([userId, startedAt])
 }
 
 /// Ordered snapshot and response are scoped to one attempt. Exam drafts have no evaluation.
