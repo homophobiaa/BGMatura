@@ -13,6 +13,18 @@ const practiceQuestionLimit = 10;
 const practiceStartSchema = z.strictObject({ topicId: z.uuid() });
 const examStartSchema = z.strictObject({ examId: z.uuid() });
 
+/**
+ * Questions a practice session on this topic may use: published, linked directly to the
+ * topic, and not tied to unpublished literature. The practice catalog counts the same set.
+ */
+export function practiceQuestionWhere(topicId: string) {
+  return {
+    status: "PUBLISHED",
+    topics: { some: { topicId } },
+    works: { none: { work: { OR: [{ status: "DRAFT" }, { author: { status: "DRAFT" } }] } } },
+  } satisfies Prisma.QuestionWhereInput;
+}
+
 type SelectedQuestion = { questionId: string; allocation?: number };
 
 async function captureOrderedQuestions(transaction: Prisma.TransactionClient, questions: readonly SelectedQuestion[]) {
@@ -32,11 +44,7 @@ export function startPractice(input: unknown, database: PrismaClient = getDataba
     if (!(await publishedTopicIds(transaction)).has(topicId)) throw new AttemptError("not-found");
     const topic = await transaction.topic.findUniqueOrThrow({ where: { id: topicId }, select: { title: true } });
     const questions = await transaction.question.findMany({
-      where: {
-        status: "PUBLISHED",
-        topics: { some: { topicId } },
-        works: { none: { work: { OR: [{ status: "DRAFT" }, { author: { status: "DRAFT" } }] } } },
-      },
+      where: practiceQuestionWhere(topicId),
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       take: practiceQuestionLimit,
       select: { id: true },

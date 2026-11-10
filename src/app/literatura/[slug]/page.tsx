@@ -6,6 +6,8 @@ import { LearningContent, StudyText } from "@/components/learning-content";
 import { readPublicWork } from "@/features/learning/server/page-reading";
 import { learningPageMetadata, missingLearningMetadata, studyDescription } from "@/features/learning/server/page-metadata";
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { StartPracticeButton } from "@/features/practice/components/start-practice-button";
+import { listPracticeTopicsForWork } from "@/features/practice/server/practice-topics";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   await connection();
@@ -19,6 +21,7 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const work = await readPublicWork(slug);
   if (!work) notFound();
+  const practiceTopics = await listPracticeTopicsForWork(work.id);
   const lists = [
     { title: "Теми", items: work.themes },
     { title: "Герои", items: work.characters },
@@ -40,5 +43,12 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
       <LearningContent content={{ version: 1, blocks: [{ type: "list", ordered: false, items: items.map((text) => [{ type: "text", text }]) }] }} />
     </section>)}
     {work.interpretation?.trim() && <section className="space-y-4"><h2>Насоки за прочит</h2><StudyText text={work.interpretation} /></section>}
+    {practiceTopics.length > 0 && <section aria-labelledby="practice-heading" className="space-y-4 rounded-lg bg-surface-soft p-4 md:p-6">
+      <h2 id="practice-heading">Упражнения</h2>
+      <ul className="space-y-4">{practiceTopics.map((topic) => <li key={topic.id} className="space-y-2">
+        <p className="text-label">{topic.title}</p>
+        <StartPracticeButton topicId={topic.id} label={`Упражни „${topic.title}“`} variant="secondary" />
+      </li>)}</ul>
+    </section>}
   </article>;
 }
