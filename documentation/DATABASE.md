@@ -329,3 +329,14 @@ Test-only session fixtures create UUID-scoped committed rows because writes are
 exercised across HTTP connections; cleanup removes only their own identifiers.
 The runner injects synthetic auth configuration into child processes, never
 production OAuth credentials. Immutable snapshot fixtures remain rolled back.
+
+## Assessment attempts
+
+Migration `20261110100000_assessment_attempts` adds immutable exam configuration
+versions, curated exams with ordered bank links, and anonymous attempts.
+`AttemptQuestion` references the matching immutable bank snapshot and stores the
+captured objective allocation, answer revision, and evaluation for one attempt.
+Only a credential digest is stored. Exam drafts can change independently of
+previous attempts, which retain their configuration version and ordered snapshots.
+See [assessment attempts](FEATURES/assessment-attempts.md) for transaction,
+ownership, and deadline behavior.

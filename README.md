@@ -14,8 +14,10 @@ published records. PostgreSQL/Prisma stores learning content and the shared
 question bank; server grading supports objective and explicitly ungraded written
 responses. Unit, database integration, and production browser tests cover these
 foundations. Google admin authentication, protected previews, and authorized draft,
-publication, and safe deletion endpoints are implemented. Editorial forms, practice
-sessions, and exams remain unfinished. No reviewed educational content is automatically seeded.
+publication, and safe deletion endpoints are implemented. The assessment backend supports
+owned practice and timed exams, with [API and recovery documentation](documentation/FEATURES/assessment-attempts.md).
+Editorial forms and student assessment pages are tracked separately. No reviewed educational
+content is automatically seeded.
 
 The planning target is a usable release ahead of the May 2027 exam period.
 
@@ -118,7 +120,7 @@ Prisma load the appropriate environment files; they must never be committed.
 | `NODE_ENV` | Validated as `development`, `test`, or `production`; Next.js sets it for its commands. An omitted value defaults to `development`. |
 | `TEST_DATABASE_URL` | Optional isolated test override. Only the documented local test role/database/port is accepted; ordinary `DATABASE_URL` is never a test fallback. |
 | `PG_BIN_DIR` | Optional absolute directory containing a complete PostgreSQL 18 `bin` toolset. Otherwise use the project-local portable cache or PATH. |
-| `SITE_URL` | Application HTTP(S) origin for learning-page canonical URLs. Set the actual origin before deployment; absent values omit canonicals. Never derive it from untrusted Host headers. |
+| `SITE_URL` | Application origin for canonical URLs and assessment request checks. Use the actual HTTPS origin for deployments. Use the explicit loopback origin when testing assessment APIs in a local production build. |
 | `BETTER_AUTH_URL` | Exact application origin; HTTPS outside loopback development. Google callback is `/api/auth/callback/google`. |
 | `BETTER_AUTH_SECRET` | Server-only random signing/encryption secret, at least 32 characters; different per environment. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Server-only OAuth client credentials from Google Cloud Console. |
@@ -211,6 +213,6 @@ Work from issues with observable acceptance criteria. Inspect existing patterns,
 
 ## MVP boundaries
 
-The first release focuses on БЕЛ preparation. Student accounts, payments, AI tutoring or essay scoring, other subjects, leaderboards, and personalized progress systems are outside the MVP.
+The first release focuses on БЕЛ preparation. Payments, AI tutoring or essay scoring, other subjects, leaderboards, and personalized progress systems are outside the MVP. Learning, practice, and exams never require an account; an optional student sign-in that keeps results across devices is planned after the anonymous loop works (see `.claude/PROJECT_DIRECTION.md` section 4.8).
 
 Educational content must be reviewed before publication. Exam composition and scoring must be checked against the official specification for the targeted year. Official past papers, adapted material, and original practice content must be clearly distinguished, with sources and usage rights reviewed before republication.

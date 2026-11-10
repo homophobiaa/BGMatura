@@ -8,7 +8,7 @@
 
 **BG Matura** is a Bulgarian-language web platform for preparing for the 12th-grade **Държавен зрелостен изпит по български език и литература (ДЗИ по БЕЛ)**.
 
-Its value is to bring **studying, practicing, realistic exam simulation, and understandable feedback** into one straightforward, modern place. Students should be able to use the core experience for free and without mandatory registration.
+Its value is to bring **studying, practicing, realistic exam simulation, and understandable feedback** into one straightforward, modern place. Students should be able to use the core experience for free and without mandatory registration. Signing in is optional and only ever adds to it: a student who wants their results kept across devices can sign in (section 4.8).
 
 **Product promise:** A student can find what to study, practice it, take a representative exam, and understand what they got right or wrong.
 
@@ -22,7 +22,7 @@ Its value is to bring **studying, practicing, realistic exam simulation, and und
 
 1. **Exam preparation first.** Every major feature must directly help a student learn, practice, simulate, or review БЕЛ exam material.
 2. **Accuracy over volume.** A smaller, verified question bank with clear explanations beats thousands of unreliable or AI-generated items.
-3. **Start without friction.** Public lessons, questions, and practice should be accessible without student signup.
+3. **Start without friction.** Public lessons, questions, and practice should be accessible without student signup. An optional sign-in may add saved history, but it never gates learning, practice, or exams.
 4. **Explain, don't just score.** Feedback must help users understand their mistakes.
 5. **Honest assessment.** Do not present self-assessed or ungraded written work as if it received an official score.
 6. **One coherent system.** Practice tests and simulated exams share a reusable question bank and grading foundation.
@@ -43,7 +43,7 @@ Its value is to bring **studying, practicing, realistic exam simulation, and und
 
 **MVP core loop:** **Learn → Practice → Get feedback → Simulate exam → Review mistakes → Learn again.**
 
-The MVP does **not** need user accounts, long-term personalized analytics, or automated recommendations to deliver this loop.
+The loop works for anonymous visitors. Optional student profiles (section 4.8) extend it by keeping results across devices, and are built after the anonymous loop works (milestone M7). The MVP does **not** need long-term personalized analytics or automated recommendations to deliver this loop.
 
 ## 4. Confirmed MVP capabilities
 
@@ -104,8 +104,9 @@ All seven areas below are **in scope**. The support behaviors in each section ar
 - Show an honest scoring basis: if essays or extended responses are not professionally graded, do **not** pretend the user has a complete official 100-point result.
 - Let the student return to related lessons or begin another attempt.
 - Protect results against casual enumeration: session-bound access or unguessable result links; do not expose answer details to unrelated visitors.
+- Optional (section 4.8): a student who signs in keeps their submitted results and sees them on any device; the anonymous attempts from the current browser are attached to the account on sign-in.
 
-**Not required:** Persistent cross-device history, accounts, progress dashboards, percentile rankings, predictive exam grades.
+**Not required:** Progress dashboards, percentile rankings, predictive exam grades. Results stay available without an account in the browser that produced them.
 
 ### 4.7 Административен панел — admin panel
 
@@ -117,6 +118,18 @@ All seven areas below are **in scope**. The support behaviors in each section ar
 - Support basic filtering/search for managing growing content.
 
 **Not required:** Multi-organization CMS, editorial approval workflow, complex role hierarchy, bulk AI content generation.
+
+### 4.8 Незадължителен профил — optional student profile
+
+- Signing in is **optional**, never required to learn, practice, take an exam, or see a result. There is no sign-up wall anywhere.
+- Sign-in uses Google, the same provider as the admin panel. No passwords are stored.
+- A signed-in student keeps their submitted results (**Моята история**) and can open them on any device. The anonymous attempts from the current browser are attached to the account on sign-in.
+- After a result, an anonymous student may be offered, calmly and dismissibly, to sign in to keep it.
+- Data minimization: only the name and verified email that Google provides; no profile image, no extra profile fields. A Bulgarian privacy notice states what is kept, why, and for how long, and a student can delete their account and data.
+- Minors: the approach is recorded in the authentication documentation, and any legal or privacy review needed before release is completed first.
+- Administration stays separate: administrators are still limited to the approved allowlist, and a student account can never reach the admin area.
+
+**Not required:** Passwords or email registration, teacher or classroom accounts, social features, progress dashboards, rankings, personalized recommendations.
 
 ## 5. Exam and scoring integrity
 
@@ -185,6 +198,10 @@ These are **planning entities**, not a frozen physical schema or instruction to 
 - Draft/published status
 - Created/updated metadata
 
+**Optional student accounts**
+- Student identity and session (name and verified email only)
+- Link between an account and its attempts
+
 A question may belong to multiple topics. Practice tests and exams should use the same bank, not duplicate question records. The schema must handle both objectively graded and ungraded written responses.
 
 ## 8. Public information architecture
@@ -236,7 +253,7 @@ The main navigation should make **Учи**, **Тестове**, and **Пробн
 Do **not** create MVP GitHub issues for the following unless scope is deliberately revised:
 
 - Other matura subjects; lower-grade exams
-- Student registration, permanent profiles, cross-device history, and long-term progress analytics
+- Long-term progress analytics and dashboards (optional student profiles with saved results are in scope; see section 4.8)
 - Personalized/adaptive learning, weak-topic recommendations, revision planning
 - AI-generated questions, AI essays scoring, AI chatbot/tutor
 - Flashcards, spaced repetition, streaks, achievements, leaderboards
@@ -315,7 +332,7 @@ These choices should be resolved close to implementation rather than asserted as
 
 - Exact admin authentication provider/implementation.
 - Exact hosting provider and database service.
-- Whether question/exam attempts use database-backed anonymous sessions, signed tokens, or a hybrid; required properties are privacy, persistence, and refresh recovery.
+- Whether question/exam attempts use database-backed anonymous sessions, signed tokens, or a hybrid; required properties are privacy, persistence, and refresh recovery. Optional accounts (section 4.8) do not change this: anonymous attempts stay the default and are attached to a student's account on sign-in.
 - Final physical database schema and content-editor approach (Markdown/rich text).
 - Details of short-answer normalization and which written items can be graded reliably.
 - How essays and ungraded written responses are entered and reviewed in the first public exam UI.

@@ -169,6 +169,7 @@ model Question {
   topics            QuestionTopic[]
   works             QuestionWork[]
   provenance        QuestionProvenance?
+  exams             ExamQuestion[]
   status            PublicationStatus   @default(DRAFT)
   createdAt         DateTime            @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
@@ -287,7 +288,115 @@ model QuestionSnapshot {
   /// SHA-256 of the exact content text, so an unchanged question reuses one snapshot.
   contentHash   String
   createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  attemptQuestions AttemptQuestion[]
 
+  @@unique([id, questionId])
   @@unique([questionId, contentHash])
   @@index([questionId, createdAt])
+}
+
+enum ExamVerification {
+  UNVERIFIED
+  CONDITIONAL
+  VERIFIED
+}
+
+model ExamConfiguration {
+  id           String           @id @default(uuid()) @db.Uuid
+  targetYear   Int
+  session      String
+  version      Int
+  verification ExamVerification
+  blueprint    Json
+  createdAt    DateTime         @default(now()) @db.Timestamptz(3)
+  exams        Exam[]
+  attempts     Attempt[]
+
+  @@unique([targetYear, session, version])
+}
+
+model Exam {
+  id              String             @id @default(uuid()) @db.Uuid
+  title           String
+  description     String
+  classification  QuestionOrigin
+  attribution     String?
+  status          PublicationStatus  @default(DRAFT)
+  configurationId String             @db.Uuid
+  configuration   ExamConfiguration  @relation(fields: [configurationId], references: [id], onDelete: Restrict)
+  questions       ExamQuestion[]
+  attempts        Attempt[]
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime           @updatedAt @db.Timestamptz(3)
+
+  @@index([status, createdAt, id])
+}
+
+model ExamQuestion {
+  examId     String   @db.Uuid
+  questionId String   @db.Uuid
+  position   Int
+  points     Decimal  @db.Decimal(6, 2)
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  @@id([examId, questionId])
+  @@unique([examId, position])
+  @@index([questionId])
+}
+
+enum AttemptMode {
+  PRACTICE
+  EXAM
+}
+
+enum AttemptState {
+  ACTIVE
+  SUBMITTED
+  EXPIRED
+}
+
+model Attempt {
+  id              String             @id @default(uuid()) @db.Uuid
+  mode            AttemptMode
+  state           AttemptState       @default(ACTIVE)
+  ownerDigest     String             @unique
+  accessUntil     DateTime           @db.Timestamptz(3)
+  startedAt       DateTime           @db.Timestamptz(3)
+  deadline        DateTime?          @db.Timestamptz(3)
+  completedAt     DateTime?          @db.Timestamptz(3)
+  position        Int                @default(0)
+  topicId         String?            @db.Uuid
+  examId          String?            @db.Uuid
+  exam            Exam?              @relation(fields: [examId], references: [id], onDelete: Restrict)
+  configurationId String?            @db.Uuid
+  configuration   ExamConfiguration? @relation(fields: [configurationId], references: [id], onDelete: Restrict)
+  title           String
+  result          Json?
+  questions       AttemptQuestion[]
+
+  @@index([accessUntil])
+  @@index([examId])
+  @@index([configurationId])
+}
+
+/// Ordered snapshot and response are scoped to one attempt. Exam drafts have no evaluation.
+model AttemptQuestion {
+  attemptId  String           @db.Uuid
+  questionId String           @db.Uuid
+  snapshotId String           @db.Uuid
+  position   Int
+  /// The objective maximum at start. Written blueprint points are not a score.
+  points     Decimal?         @db.Decimal(6, 2)
+  answer     Json?
+  evaluation Json?
+  correct    Boolean?
+  revision   Int              @default(0)
+  savedAt    DateTime?        @db.Timestamptz(3)
+  attempt    Attempt          @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  snapshot   QuestionSnapshot @relation(fields: [snapshotId, questionId], references: [id, questionId], onDelete: Restrict)
+
+  @@id([attemptId, questionId])
+  @@unique([attemptId, position])
+  @@index([snapshotId, questionId])
 }

@@ -3,37 +3,17 @@ import { Prisma } from "@/generated/prisma/client";
 import { AdminAuthorizationError } from "./authorization";
 import { AdminConfigurationError } from "./environment";
 import { EditorialError } from "@/server/editorial";
+import { InvalidJsonError, privateHeaders, readBoundedJson } from "@/server/http";
 
-export const privateHeaders = {
-  "Cache-Control": "private, no-store",
-  "Vary": "Cookie",
-  "X-Robots-Tag": "noindex, nofollow",
-};
+export { privateHeaders } from "@/server/http";
 
-/** Stream into a bounded buffer instead of trusting Content-Length. */
 export async function readEditorialJson(request: Request): Promise<unknown> {
-  if (request.headers.get("content-type")?.split(";")[0]?.trim() !== "application/json") {
-    throw new EditorialError("invalid", "Send an application/json body.");
+  try {
+    return await readBoundedJson(request);
+  } catch (error) {
+    if (error instanceof InvalidJsonError) throw new EditorialError("invalid", error.message);
+    throw error;
   }
-  if (!request.body) throw new EditorialError("invalid", "A JSON body is required.");
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let length = 0;
-  while (true) {
-    const chunk = await reader.read();
-    if (chunk.done) break;
-    length += chunk.value.byteLength;
-    if (length > 65536) {
-      await reader.cancel();
-      throw new EditorialError("invalid", "The request exceeds the 64 KiB limit.");
-    }
-    chunks.push(chunk.value);
-  }
-  const bytes = new Uint8Array(length);
-  let offset = 0;
-  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
-  try { return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)) as unknown; }
-  catch { throw new EditorialError("invalid", "Send valid UTF-8 JSON."); }
 }
 
 export async function editorialResponse(operation: () => Promise<unknown>): Promise<Response> {
