@@ -179,6 +179,7 @@ npm run db:status
 | `npm run db:status` | Inspect migration status. |
 | `npm run db:stop` | Stop only the project-local development cluster; retain its data. |
 | `npm run db:reset` | Destructively reset only the generated project-local development database; never a shell/hosted URL. |
+| `npm run db:seed:demo` | Add demo records (author, work, topics, lesson, four questions) to the local development database as drafts. Add `-- --publish` to publish them for public pages and practice. Every record is labelled `[ДЕМО]`, slugs start with `demo-`, and rerunning never duplicates or overwrites anything. Never use it for real content. Code: `prisma/demo-content.ts`. |
 | `npm run db:test:start` / `npm run db:test:stop` | Start/stop the separate local test cluster. |
 
 To verify persistence and the browser foundation:

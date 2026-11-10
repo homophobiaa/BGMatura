@@ -18,6 +18,7 @@
     "db:deploy": "prisma migrate deploy --config prisma7.config.ts",
     "db:status": "prisma migrate status --config prisma7.config.ts",
     "db:reset": "node scripts/local-database.ts reset development",
+    "db:seed:demo": "node scripts/seed-demo.ts",
     "test:integration": "node scripts/run-database-tests.ts integration",
     "test:e2e": "node scripts/run-database-tests.ts browser",
     "dev": "next dev",
